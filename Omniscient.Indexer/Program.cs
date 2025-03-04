@@ -1,10 +1,7 @@
-using EasyNetQ;
 using Microsoft.EntityFrameworkCore;
 using Omniscient.Indexer.Infrastructure;
 using Omniscient.RabbitMQClient;
-using Omniscient.RabbitMQClient.Messages;
 using Omniscient.ServiceDefaults;
-using Omniscient.Shared.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
