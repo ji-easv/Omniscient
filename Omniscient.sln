@@ -1,18 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# 
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.Web", "Omniscient.Web\Omniscient.Web.csproj", "{0A5280DD-8B41-4FF9-9425-D33F79980B91}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.Cleaner", "Omniscient.Cleaner\Omniscient.Cleaner.csproj", "{18CF77BC-DCAC-4C8D-9C25-D0E2A0F55DE1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.Indexer", "Omniscient.Indexer\Omniscient.Indexer.csproj", "{FB05E75B-7290-48AE-A564-CF4C1CCACBF9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.RabbitMQClient", "Omniscient.RabbitMQClient\Omniscient.RabbitMQClient.csproj", "{E7BA93A2-F97D-431C-83DF-85FE2AB36DBE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.AppHost", "Omniscient.AppHost\Omniscient.AppHost.csproj", "{36A06A83-1835-44C0-8783-AB9B49BE14E7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.ServiceDefaults", "Omniscient.ServiceDefaults\Omniscient.ServiceDefaults.csproj", "{0567B0BB-579F-450D-88CC-BEB79E5CA12C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.ServiceDefaults", "Omniscient.ServiceDefaults\Omniscient.ServiceDefaults.csproj", "{B876E864-6E64-49F0-BA61-D853869C01FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.Shared", "Omniscient.Shared\Omniscient.Shared.csproj", "{D1E49606-F51D-4D0B-AF00-4C016A1B1E65}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.Shared", "Omniscient.Shared\Omniscient.Shared.csproj", "{2D9C5F4D-B4EC-49B8-98F2-E5B6EBF76A55}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.AppHost", "Omniscient.AppHost\Omniscient.AppHost.csproj", "{153D483F-1A05-4CAA-A27F-2EB94397D706}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.RabbitMQClient", "Omniscient.RabbitMQClient\Omniscient.RabbitMQClient.csproj", "{49D0D7CF-EA68-4D3B-B894-DAE8EEA0DEB2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,21 +33,21 @@ Global
 		{FB05E75B-7290-48AE-A564-CF4C1CCACBF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FB05E75B-7290-48AE-A564-CF4C1CCACBF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FB05E75B-7290-48AE-A564-CF4C1CCACBF9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E7BA93A2-F97D-431C-83DF-85FE2AB36DBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E7BA93A2-F97D-431C-83DF-85FE2AB36DBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E7BA93A2-F97D-431C-83DF-85FE2AB36DBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E7BA93A2-F97D-431C-83DF-85FE2AB36DBE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0567B0BB-579F-450D-88CC-BEB79E5CA12C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0567B0BB-579F-450D-88CC-BEB79E5CA12C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0567B0BB-579F-450D-88CC-BEB79E5CA12C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0567B0BB-579F-450D-88CC-BEB79E5CA12C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D1E49606-F51D-4D0B-AF00-4C016A1B1E65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D1E49606-F51D-4D0B-AF00-4C016A1B1E65}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D1E49606-F51D-4D0B-AF00-4C016A1B1E65}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D1E49606-F51D-4D0B-AF00-4C016A1B1E65}.Release|Any CPU.Build.0 = Release|Any CPU
-		{153D483F-1A05-4CAA-A27F-2EB94397D706}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{153D483F-1A05-4CAA-A27F-2EB94397D706}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{153D483F-1A05-4CAA-A27F-2EB94397D706}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{153D483F-1A05-4CAA-A27F-2EB94397D706}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36A06A83-1835-44C0-8783-AB9B49BE14E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36A06A83-1835-44C0-8783-AB9B49BE14E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36A06A83-1835-44C0-8783-AB9B49BE14E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36A06A83-1835-44C0-8783-AB9B49BE14E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B876E864-6E64-49F0-BA61-D853869C01FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B876E864-6E64-49F0-BA61-D853869C01FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B876E864-6E64-49F0-BA61-D853869C01FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B876E864-6E64-49F0-BA61-D853869C01FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D9C5F4D-B4EC-49B8-98F2-E5B6EBF76A55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D9C5F4D-B4EC-49B8-98F2-E5B6EBF76A55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D9C5F4D-B4EC-49B8-98F2-E5B6EBF76A55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D9C5F4D-B4EC-49B8-98F2-E5B6EBF76A55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49D0D7CF-EA68-4D3B-B894-DAE8EEA0DEB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49D0D7CF-EA68-4D3B-B894-DAE8EEA0DEB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49D0D7CF-EA68-4D3B-B894-DAE8EEA0DEB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49D0D7CF-EA68-4D3B-B894-DAE8EEA0DEB2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

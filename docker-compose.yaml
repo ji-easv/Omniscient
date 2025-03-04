@@ -69,6 +69,9 @@
       - "5341:5341"
       - "5342:80"
     volumes:
-      - rps_seq_data:/data
+      - omniscient:/data
     environment:
       - ACCEPT_EULA=Y
+        
+volumes:
+  omniscient:
