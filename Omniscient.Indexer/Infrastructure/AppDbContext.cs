@@ -9,8 +9,5 @@ public class AppDbContext : DbContext
     public virtual DbSet<Word> Words { get; set; } = default!;
     public virtual DbSet<Occurence> Occurences { get; set; } = default!;
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        base.OnConfiguring(optionsBuilder);
-    }
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 }
