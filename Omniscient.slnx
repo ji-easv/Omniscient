@@ -5,6 +5,7 @@
     <File Path="docker-compose.yaml" />
     <File Path="Workspace.dsl" />
   </Folder>
+  <Project Path="Omniscient.AppHost\Omniscient.AppHost.csproj" Type="Classic C#" />
   <Project Path="Omniscient.Cleaner\Omniscient.Cleaner.csproj" Type="Classic C#" />
   <Project Path="Omniscient.Indexer\Omniscient.Indexer.csproj" Type="Classic C#" />
   <Project Path="Omniscient.ServiceDefaults\Omniscient.ServiceDefaults.csproj" Type="Classic C#" />
