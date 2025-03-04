@@ -19,4 +19,9 @@
       </Content>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Omniscient.ServiceDefaults\Omniscient.ServiceDefaults.csproj" />
+      <ProjectReference Include="..\Omniscient.Shared\Omniscient.Shared.csproj" />
+    </ItemGroup>
+
 </Project>

@@ -1,6 +1,13 @@
 ﻿<Solution>
+  <Folder Name="/items/">
+    <File Path="Omniscient_DataModel.png" />
+    <File Path="README.md" />
+    <File Path="docker-compose.yaml" />
+    <File Path="Workspace.dsl" />
+  </Folder>
   <Project Path="Omniscient.Cleaner\Omniscient.Cleaner.csproj" Type="Classic C#" />
   <Project Path="Omniscient.Indexer\Omniscient.Indexer.csproj" Type="Classic C#" />
   <Project Path="Omniscient.ServiceDefaults\Omniscient.ServiceDefaults.csproj" Type="Classic C#" />
+  <Project Path="Omniscient.Shared\Omniscient.Shared.csproj" Type="Classic C#" />
   <Project Path="Omniscient.Web\Omniscient.Web.csproj" Type="Classic C#" />
 </Solution>
