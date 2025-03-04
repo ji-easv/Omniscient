@@ -3,4 +3,5 @@
   <Project Path="Omniscient.Indexer\Omniscient.Indexer.csproj" Type="Classic C#" />
   <Project Path="Omniscient.ServiceDefaults\Omniscient.ServiceDefaults.csproj" Type="Classic C#" />
   <Project Path="Omniscient.Web\Omniscient.Web.csproj" Type="Classic C#" />
+  <Project Path="Omniscient.RabbitMQClient\Omniscient.RabbitMQClient.csproj" Type="Classic C#" />
 </Solution>
