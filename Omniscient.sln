@@ -1,6 +1,5 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# 
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.Web", "Omniscient.Web\Omniscient.Web.csproj", "{0A5280DD-8B41-4FF9-9425-D33F79980B91}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.Cleaner", "Omniscient.Cleaner\Omniscient.Cleaner.csproj", "{18CF77BC-DCAC-4C8D-9C25-D0E2A0F55DE1}"

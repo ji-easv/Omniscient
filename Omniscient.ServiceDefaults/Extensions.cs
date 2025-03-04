@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Enrichers.Span;
 
 namespace Omniscient.ServiceDefaults;
 
@@ -18,6 +20,8 @@ public static class Extensions
 {
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        builder.ConfigureSerilog();
+
         builder.ConfigureOpenTelemetry();
 
         builder.AddDefaultHealthChecks();
@@ -119,6 +123,19 @@ public static class Extensions
         }
 
         return app;
+    }
+
+    private static TBuilder ConfigureSerilog<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    {
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .Enrich.WithSpan()
+            .WriteTo.Seq("http://localhost:5341")
+            .WriteTo.Console()
+            .CreateLogger();
+
+        builder.Logging.AddSerilog();
+        return builder;
     }
 }
 
