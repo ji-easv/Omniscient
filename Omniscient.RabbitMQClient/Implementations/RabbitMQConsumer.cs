@@ -4,7 +4,7 @@ using Omniscient.RabbitMQClient.Interfaces;
 
 namespace Omniscient.RabbitMQClient.Implementations;
 
-public class RabbitMQConsumer(IBus bus) : BackgroundService, IAsyncConsumer
+public class RabbitMqConsumer(IBus bus) : BackgroundService, IAsyncConsumer
 {
     private readonly Dictionary<string, IDisposable> _subscriptions = new();
     
@@ -13,13 +13,13 @@ public class RabbitMQConsumer(IBus bus) : BackgroundService, IAsyncConsumer
         var handlerTypes = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(x => x.GetTypes())
             .Where(t => t.GetInterfaces().Any(i =>
-                i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRabbitMQMessageHandler<>)))
+                i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRabbitMqMessageHandler<>)))
             .ToList();
 
         foreach (var handlerType in handlerTypes)
         {
             var messageType = handlerType.GetInterfaces()
-                .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRabbitMQMessageHandler<>))
+                .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRabbitMqMessageHandler<>))
                 .GetGenericArguments()[0];
             Console.WriteLine($"Found handler {handlerType.Name} for message type {messageType.Name}");
             
@@ -43,7 +43,7 @@ public class RabbitMQConsumer(IBus bus) : BackgroundService, IAsyncConsumer
                 methodInfo.Invoke(handlerInstance, [msg, CancellationToken.None]);
             };
             
-            var subscribeAsyncMethod = typeof(RabbitMQConsumer).GetMethod(nameof(SubscribeAsync))
+            var subscribeAsyncMethod = typeof(RabbitMqConsumer).GetMethod(nameof(SubscribeAsync))
                 .MakeGenericMethod(messageType);
 
             subscribeAsyncMethod.Invoke(this, [messageType.Name, typedAction, CancellationToken.None]);

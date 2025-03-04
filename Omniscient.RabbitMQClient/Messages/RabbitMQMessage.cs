@@ -4,7 +4,7 @@ using OpenTelemetry.Context.Propagation;
 
 namespace Omniscient.RabbitMQClient.Messages;
 
-public abstract class RabbitMQMessage
+public abstract class RabbitMqMessage
 {
     private readonly Dictionary<string, object> _headers = new();
     public ActivityContext ActivityContext { get; set; }
