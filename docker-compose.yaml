@@ -62,3 +62,13 @@
    ports:
      - "18888:18888"
      - "4317:18889"
+    
+  seq:
+    image: datalust/seq
+    ports:
+      - "5341:5341"
+      - "5342:80"
+    volumes:
+      - rps_seq_data:/data
+    environment:
+      - ACCEPT_EULA=Y
