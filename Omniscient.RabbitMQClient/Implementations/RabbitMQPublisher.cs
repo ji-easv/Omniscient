@@ -15,7 +15,7 @@ public class RabbitMqPublisher(IBus bus) : IAsyncPublisher
             throw new ArgumentException("Message must be of type RabbitMqMessage");
         }
         
-        using var activity = Monitoring.ActivitySource.StartActivity("PublishAsync", ActivityKind.Producer);
+        using var activity = ActivitySources.OmniscientActivitySource.StartActivity(ActivityKind.Producer);
         rabbitMqMessage.PropagateContext(activity);
         await bus.PubSub.PublishAsync(message, token);
     }

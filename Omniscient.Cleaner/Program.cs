@@ -4,6 +4,9 @@ using Omniscient.RabbitMQClient.Interfaces;
 using Omniscient.RabbitMQClient.Messages;
 using Omniscient.ServiceDefaults;
 using Omniscient.Shared.Entities;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +25,7 @@ app.MapDefaultEndpoints();
 // TODO: Remove later, proof of concept
 app.MapGet("/publish", async (IAsyncPublisher publisher) =>
 {
-    using var activity = Monitoring.ActivitySource.StartActivity(ActivityKind.Server);
+    using var activity = ActivitySources.OmniscientActivitySource.StartActivity(ActivityKind.Server);
     var message = new EmailMessage
     {
         Email = new Email

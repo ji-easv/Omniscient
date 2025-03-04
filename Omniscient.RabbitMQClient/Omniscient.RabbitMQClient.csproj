@@ -16,4 +16,8 @@
       <PackageReference Include="EasyNetQ.Serialization.SystemTextJson" Version="8.0.0-beta98" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="Implementations\MessageHandlerDecorator.cs" />
+    </ItemGroup>
+
 </Project>
