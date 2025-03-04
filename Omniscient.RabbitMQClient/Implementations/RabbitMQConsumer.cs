@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using Omniscient.RabbitMQClient.Interfaces;
 using Omniscient.RabbitMQClient.Messages;
+using Serilog;
 
 namespace Omniscient.RabbitMQClient.Implementations;
 
@@ -22,19 +23,19 @@ public class RabbitMqConsumer(IBus bus) : BackgroundService, IAsyncConsumer
             var messageType = handlerType.GetInterfaces()
                 .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRabbitMqMessageHandler<>))
                 .GetGenericArguments()[0];
-            Console.WriteLine($"Found handler {handlerType.Name} for message type {messageType.Name}");
+            Log.Information("Found handler {HandlerTypeName} for message type {MessageTypeName}", handlerType.Name, messageType.Name);
             
             var handlerInstance = Activator.CreateInstance(handlerType);
             if (handlerInstance == null)
             {
-                Console.WriteLine($"Could not create instance of handler {handlerType.Name}");
+                Log.Information("Could not create instance of handler {HandlerTypeName}", handlerType.Name);
                 continue;
             }
             
             var methodInfo = handlerType.GetMethod("HandleMessageAsync");
             if (methodInfo == null)
             {
-                Console.WriteLine($"Could not find HandleMessageAsync method in handler {handlerType.Name}");
+                Log.Information("Could not create instance of handler {HandlerTypeName}", handlerType.Name);
                 continue;
             }
             

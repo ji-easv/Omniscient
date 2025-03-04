@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.ServiceDefaults"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.Shared", "Omniscient.Shared\Omniscient.Shared.csproj", "{D1E49606-F51D-4D0B-AF00-4C016A1B1E65}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.AppHost", "Omniscient.AppHost\Omniscient.AppHost.csproj", "{153D483F-1A05-4CAA-A27F-2EB94397D706}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{D1E49606-F51D-4D0B-AF00-4C016A1B1E65}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1E49606-F51D-4D0B-AF00-4C016A1B1E65}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D1E49606-F51D-4D0B-AF00-4C016A1B1E65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{153D483F-1A05-4CAA-A27F-2EB94397D706}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{153D483F-1A05-4CAA-A27F-2EB94397D706}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{153D483F-1A05-4CAA-A27F-2EB94397D706}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{153D483F-1A05-4CAA-A27F-2EB94397D706}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
