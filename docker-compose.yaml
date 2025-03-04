@@ -1,0 +1,58 @@
+﻿services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 30s
+      timeout: 5s
+      retries: 2
+  
+  postgres_db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=root
+  
+  cleaner-service:
+    build:
+      context: .
+      dockerfile: Omniscient.Cleaner/Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres_db:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - RABBITMQ_HOST=rabbitmq
+  
+  indexer-service:
+    build:
+      context: .
+      dockerfile: Omniscient.Indexer/Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres_db:
+        condition: service_started
+    ports:
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - RABBITMQ_HOST=rabbitmq
+  
+  blazor-ui:
+    build:
+      context: .
+      dockerfile: Omniscient.BlazorUI/Dockerfile
+    depends_on:
+      - indexer-service
+    ports:
+      - "8082:80"
