@@ -2,5 +2,5 @@
 
 public interface IAsyncConsumer
 {
-    Task SubscribeAsync<T>(string subscription, Action<T> handler, CancellationToken cancellationToken = default);
+    void RegisterHandler<T>(string subscription, Func<T, Task> handler);
 }

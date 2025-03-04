@@ -2,5 +2,5 @@
 
 public interface IMessageHandler<in T>
 {
-    Task HandleMessage(T message);
+    Task HandleMessageAsync(T message);
 }

@@ -8,10 +8,12 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Omniscient.ServiceDefaults\Omniscient.ServiceDefaults.csproj" />
+      <ProjectReference Include="..\Omniscient.Shared\Omniscient.Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="EasyNetQ" Version="8.0.0-beta98" />
+      <PackageReference Include="EasyNetQ.Serialization.SystemTextJson" Version="8.0.0-beta98" />
     </ItemGroup>
 
 </Project>
