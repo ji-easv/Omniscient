@@ -2,5 +2,5 @@
 
 public interface IMessageHandler<in T>
 {
-    Task HandleMessageAsync(T message);
+    Task HandleMessageAsync(T message, CancellationToken token = default);
 }
