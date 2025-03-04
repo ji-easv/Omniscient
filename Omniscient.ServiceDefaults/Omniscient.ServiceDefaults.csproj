@@ -18,9 +18,5 @@
         <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.9.0"/>
         <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.9.0"/>
     </ItemGroup>
-
-    <ItemGroup>
-      <Compile Remove="Monitoring.cs" />
-    </ItemGroup>
-
+    
 </Project>
