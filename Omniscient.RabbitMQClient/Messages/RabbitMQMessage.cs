@@ -6,7 +6,7 @@ namespace Omniscient.RabbitMQClient.Messages;
 
 public abstract class RabbitMqMessage
 {
-    private readonly Dictionary<string, object> _headers = new();
+    public Dictionary<string, object> Headers { get; set; } = new();
     public ActivityContext ActivityContext { get; set; }
 
     public void PropagateContext(Activity? activity)
@@ -14,7 +14,7 @@ public abstract class RabbitMqMessage
         var activityContext = activity?.Context ?? Activity.Current?.Context ?? default;
         var propagationContext = new PropagationContext(activityContext, Baggage.Current);
         var propagator = new TraceContextPropagator();
-        propagator.Inject(propagationContext, this, (req, key, value) => req._headers.Add(key, value));
+        propagator.Inject(propagationContext, this, (req, key, value) => req.Headers.Add(key, value));
     }
 
     public void ExtractPropagatedContext()
@@ -22,7 +22,7 @@ public abstract class RabbitMqMessage
         var propagator = new TraceContextPropagator();
         var parentContext = propagator.Extract(default, this, (req, key) =>
         {
-            return new List<string>([req._headers.ContainsKey(key) ? req._headers[key].ToString() : string.Empty]);
+            return new List<string>([req.Headers.ContainsKey(key) ? req.Headers[key].ToString() : string.Empty]);
         });
         Baggage.Current = parentContext.Baggage;
         ActivityContext = parentContext.ActivityContext;

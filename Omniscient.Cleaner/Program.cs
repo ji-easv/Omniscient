@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Omniscient.RabbitMQClient;
 using Omniscient.RabbitMQClient.Interfaces;
 using Omniscient.RabbitMQClient.Messages;
@@ -21,7 +22,8 @@ app.MapDefaultEndpoints();
 // TODO: Remove later, proof of concept
 app.MapGet("/publish", async (IAsyncPublisher publisher) =>
 {
-    await publisher.PublishAsync(new EmailMessage
+    using var activity = Monitoring.ActivitySource.StartActivity(ActivityKind.Server);
+    var message = new EmailMessage
     {
         Email = new Email
         {
@@ -29,7 +31,8 @@ app.MapGet("/publish", async (IAsyncPublisher publisher) =>
             Content = "This is a test email",
             FileName = "email.txt",
         }
-    });
+    };
+    await publisher.PublishAsync(message);
     return Results.NoContent();
 });
 

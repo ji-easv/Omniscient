@@ -1,6 +1,7 @@
 ﻿using EasyNetQ;
 using Microsoft.Extensions.Hosting;
 using Omniscient.RabbitMQClient.Interfaces;
+using Omniscient.RabbitMQClient.Messages;
 
 namespace Omniscient.RabbitMQClient.Implementations;
 
@@ -30,10 +31,7 @@ public class RabbitMqConsumer(IBus bus) : BackgroundService, IAsyncConsumer
                 continue;
             }
             
-            var decoratorType = typeof(MessageHandlerDecorator<>).MakeGenericType(messageType);
-            var decoratedHandlerInstance = Activator.CreateInstance(decoratorType, handlerInstance);
-            
-            var methodInfo = decoratorType.GetMethod("HandleMessageAsync");
+            var methodInfo = handlerType.GetMethod("HandleMessageAsync");
             if (methodInfo == null)
             {
                 Console.WriteLine($"Could not find HandleMessageAsync method in handler {handlerType.Name}");
@@ -43,7 +41,9 @@ public class RabbitMqConsumer(IBus bus) : BackgroundService, IAsyncConsumer
             // Create a typed delegate for the handler method
             Action<object> typedAction = msg =>
             {
-                methodInfo.Invoke(decoratedHandlerInstance, [msg, CancellationToken.None]);
+                if (msg is not RabbitMqMessage rabbitMqMessage) return;
+                rabbitMqMessage.ExtractPropagatedContext();
+                methodInfo.Invoke(handlerInstance, [rabbitMqMessage, CancellationToken.None]);
             };
             
             var subscribeAsyncMethod = typeof(RabbitMqConsumer).GetMethod(nameof(SubscribeAsync))

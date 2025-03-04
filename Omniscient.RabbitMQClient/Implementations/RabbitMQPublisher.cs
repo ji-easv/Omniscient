@@ -2,20 +2,21 @@
 using EasyNetQ;
 using Omniscient.RabbitMQClient.Interfaces;
 using Omniscient.RabbitMQClient.Messages;
+using Omniscient.ServiceDefaults;
 
 namespace Omniscient.RabbitMQClient.Implementations;
 
 public class RabbitMqPublisher(IBus bus) : IAsyncPublisher 
 {
-    public Task PublishAsync<T>(T message, CancellationToken token = default)
+    public async Task PublishAsync<T>(T message, CancellationToken token = default)
     {
-        using var activity = new Activity("PublishAsync");
         if (message is not RabbitMqMessage rabbitMqMessage)
         {
             throw new ArgumentException("Message must be of type RabbitMqMessage");
         }
         
+        using var activity = Monitoring.ActivitySource.StartActivity("PublishAsync", ActivityKind.Producer);
         rabbitMqMessage.PropagateContext(activity);
-        return bus.PubSub.PublishAsync(message, token);
+        await bus.PubSub.PublishAsync(message, token);
     }
 }
