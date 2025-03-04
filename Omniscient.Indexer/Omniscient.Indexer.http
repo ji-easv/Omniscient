@@ -1,0 +1,6 @@
+@Omniscient.Indexer_HostAddress = http://localhost:5088
+
+GET {{Omniscient.Indexer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
