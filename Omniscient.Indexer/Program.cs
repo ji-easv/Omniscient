@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Omniscient.Indexer.Infrastructure;
+using Omniscient.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 

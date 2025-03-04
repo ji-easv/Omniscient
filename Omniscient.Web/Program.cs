@@ -1,3 +1,4 @@
+using Omniscient.ServiceDefaults;
 using Omniscient.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);

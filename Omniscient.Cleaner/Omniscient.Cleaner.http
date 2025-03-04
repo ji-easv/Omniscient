@@ -1,6 +1,6 @@
-@Omniscient.Cleaner_HostAddress = http://localhost:5085
+@Cleaner_HostAddress = http://localhost:5085
 
-GET {{Omniscient.Cleaner_HostAddress}}/weatherforecast/
+GET {{Cleaner_HostAddress}}/publish/
 Accept: application/json
 
 ###
