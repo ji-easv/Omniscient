@@ -30,7 +30,10 @@ public class RabbitMqConsumer(IBus bus) : BackgroundService, IAsyncConsumer
                 continue;
             }
             
-            var methodInfo = handlerType.GetMethod("HandleMessageAsync");
+            var decoratorType = typeof(MessageHandlerDecorator<>).MakeGenericType(messageType);
+            var decoratedHandlerInstance = Activator.CreateInstance(decoratorType, handlerInstance);
+            
+            var methodInfo = decoratorType.GetMethod("HandleMessageAsync");
             if (methodInfo == null)
             {
                 Console.WriteLine($"Could not find HandleMessageAsync method in handler {handlerType.Name}");
@@ -40,7 +43,7 @@ public class RabbitMqConsumer(IBus bus) : BackgroundService, IAsyncConsumer
             // Create a typed delegate for the handler method
             Action<object> typedAction = msg =>
             {
-                methodInfo.Invoke(handlerInstance, [msg, CancellationToken.None]);
+                methodInfo.Invoke(decoratedHandlerInstance, [msg, CancellationToken.None]);
             };
             
             var subscribeAsyncMethod = typeof(RabbitMqConsumer).GetMethod(nameof(SubscribeAsync))
