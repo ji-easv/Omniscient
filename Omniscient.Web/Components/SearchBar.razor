@@ -1,0 +1,27 @@
+﻿@code {
+    [Parameter]
+    public EventCallback<string> OnSearch { get; set; }
+
+    private string searchQuery = "";
+
+    private async Task HandleSearch()
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery))
+            return;
+
+        await OnSearch.InvokeAsync(searchQuery);
+    }
+}
+
+<div class="search-container mb-4">
+    <div class="input-group">
+        <input type="text" class="form-control"
+               @bind="searchQuery"
+               @bind:event="oninput"
+               @onkeyup="HandleSearch"
+               placeholder="Search emails..." />
+        <button class="btn btn-primary" @onclick="HandleSearch">
+            Search
+        </button>
+    </div>
+</div>
