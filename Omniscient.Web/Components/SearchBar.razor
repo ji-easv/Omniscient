@@ -8,7 +8,7 @@
     {
         if (string.IsNullOrWhiteSpace(searchQuery))
             return;
-
+        Console.WriteLine("You writed to search for: " + searchQuery);
         await OnSearch.InvokeAsync(searchQuery);
     }
 }
