@@ -1,0 +1,33 @@
+﻿.email-grid {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.list-group-item {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+.pagination-container {
+    margin-top: 1rem;
+}
+
+.email-detail {
+    width: 100%;
+}
+
+.email-content {
+    white-space: pre-wrap;
+    max-height: 70vh;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+}
+
+pre {
+    font-family: inherit;
+    margin: 0;
+}

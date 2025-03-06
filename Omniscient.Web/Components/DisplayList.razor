@@ -1,0 +1,100 @@
+﻿@using Omniscient.Web.Models
+
+<div class="email-grid">
+    @if (Emails == null || !Emails.Any())
+    {
+        <p>No emails found.</p>
+    }
+    else if (SelectedEmail != null)
+    {
+        <div class="email-detail">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>@SelectedEmail.FileName</h3>
+                <div>
+                    <button class="btn btn-primary me-2" @onclick="DownloadEmail" title="Download email">
+                        <i class="bi bi-download"></i> Download
+                    </button>
+                    <button class="btn btn-secondary" @onclick="() => SelectedEmail = null" title="Back to list">
+                        Back to list
+                    </button>
+                </div>
+            </div>
+            <div class="email-content border rounded p-3">
+                <pre>@SelectedEmail.FullContent</pre>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="list-group">
+            @foreach (var email in CurrentPageEmails)
+            {
+                <div class="list-group-item list-group-item-action" @onclick="() => ViewEmail(email)">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">@email.FileName</h5>
+                    </div>
+                    <p class="mb-1">@(email.FullContent.Length > 150 ? email.FullContent.Substring(0, 150) + "..." : email.FullContent)</p>
+                </div>
+            }
+        </div>
+
+        <div class="pagination-container mt-3 d-flex justify-content-center">
+            <nav>
+                <ul class="pagination">
+                    <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => GoToPage(CurrentPage - 1)" disabled="@(CurrentPage == 1)">Previous</button>
+                    </li>
+
+                    @for (int i = 1; i <= TotalPages; i++)
+                    {
+                        var pageNumber = i;
+                        <li class="page-item @(CurrentPage == pageNumber ? "active" : "")">
+                            <button class="page-link" @onclick="() => GoToPage(pageNumber)">@pageNumber</button>
+                        </li>
+                    }
+
+                    <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => GoToPage(CurrentPage + 1)" disabled="@(CurrentPage == TotalPages)">Next</button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<Email> Emails { get; set; } = new();
+
+    [Parameter]
+    public int ItemsPerPage { get; set; } = 3;
+
+    private int CurrentPage { get; set; } = 1;
+    private Email? SelectedEmail { get; set; }
+
+    private int TotalPages => (int)Math.Ceiling(Emails.Count / (double)ItemsPerPage);
+
+    private List<Email> CurrentPageEmails => Emails
+        .Skip((CurrentPage - 1) * ItemsPerPage)
+        .Take(ItemsPerPage)
+        .ToList();
+
+    private void GoToPage(int pageNumber)
+    {
+        if (pageNumber >= 1 && pageNumber <= TotalPages)
+        {
+            CurrentPage = pageNumber;
+        }
+    }
+
+    private void ViewEmail(Email email)
+    {
+        SelectedEmail = email;
+    }
+
+    private void DownloadEmail()
+    {
+        // TODO: Implement email download functionality
+        Console.WriteLine($"Download requested for email: {SelectedEmail?.FileName}");
+    }
+}
