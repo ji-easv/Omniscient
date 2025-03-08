@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Omniscient.Indexer.Infrastructure;
+using Omniscient.RabbitMQClient;
 using Omniscient.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.AddServiceDefaults();
+
+builder.Services.AddRabbitMqDependencies();
 
 var app = builder.Build();
 

@@ -18,6 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Omniscient.RabbitMQClient\Omniscient.RabbitMQClient.csproj" />
       <ProjectReference Include="..\Omniscient.ServiceDefaults\Omniscient.ServiceDefaults.csproj" />
     </ItemGroup>
 

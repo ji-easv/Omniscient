@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.ServiceDefaults"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.Shared", "Omniscient.Shared\Omniscient.Shared.csproj", "{2D9C5F4D-B4EC-49B8-98F2-E5B6EBF76A55}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Omniscient.RabbitMQClient", "Omniscient.RabbitMQClient\Omniscient.RabbitMQClient.csproj", "{49D0D7CF-EA68-4D3B-B894-DAE8EEA0DEB2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,5 +45,9 @@ Global
 		{2D9C5F4D-B4EC-49B8-98F2-E5B6EBF76A55}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D9C5F4D-B4EC-49B8-98F2-E5B6EBF76A55}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D9C5F4D-B4EC-49B8-98F2-E5B6EBF76A55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49D0D7CF-EA68-4D3B-B894-DAE8EEA0DEB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49D0D7CF-EA68-4D3B-B894-DAE8EEA0DEB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49D0D7CF-EA68-4D3B-B894-DAE8EEA0DEB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49D0D7CF-EA68-4D3B-B894-DAE8EEA0DEB2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
