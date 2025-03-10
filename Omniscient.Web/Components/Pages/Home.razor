@@ -13,14 +13,17 @@
 <div class="container">
     <h1>Search</h1>
     <SearchBar OnSearch="HandleSearch" />
-    <DisplayList Emails="_emails" OnPageChange="ChangePageIndex" OnEmailSelected="ViewEmail" SelectedEmail="_selectedEmail"/>
+    <DisplayList Emails="_emails" OnPageChange="ChangePageIndex" OnEmailSelected="ViewEmail" 
+                 SelectedEmailContent="@_selectedEmailContent" SelectedEmailDto="@_selectedEmailDto"/>
 </div>
 
 
 @code {
     private PaginatedList<EmailDto>? _emails;
-    private Email? _selectedEmail;
     private string _query = string.Empty;
+    
+    private string? _selectedEmailContent;
+    private EmailDto? _selectedEmailDto;
 
     protected override async Task OnInitializedAsync()
     {
@@ -43,8 +46,9 @@
         await Search(_query, pageIndex);
     }
 
-    private async Task ViewEmail(Guid emailId)
+    private async Task ViewEmail(EmailDto emailDto)
     {
-        _selectedEmail = await IndexerClient.GetEmailAsync(emailId);
+        _selectedEmailDto = emailDto;
+        _selectedEmailContent = await IndexerClient.GetFullContentAsync(emailDto.Id);
     }
 }
