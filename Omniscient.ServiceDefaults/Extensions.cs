@@ -128,10 +128,10 @@ public static class Extensions
     private static TBuilder ConfigureSerilog<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
+            .MinimumLevel.Warning() // TODO: revert
             .Enrich.WithSpan()
             .WriteTo.Seq("http://localhost:5341")
-            .WriteTo.Console()
+            // .WriteTo.Console() TODO: revert
             .CreateLogger();
 
         builder.Logging.AddSerilog();

@@ -9,7 +9,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTrackingWithIdentityResolution);
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 

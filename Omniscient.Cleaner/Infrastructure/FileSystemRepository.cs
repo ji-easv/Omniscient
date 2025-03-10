@@ -47,7 +47,7 @@ public class FileSystemRepository : IFileSystemRepository
         _allFilesCount = allFiles.Length;
         _path = path;
 
-        foreach (var file in allFiles.Take(20))
+        foreach (var file in allFiles.Take(10)) // TODO: revert Take(10)
         {
             tasks.Add(ProcessSingleFile(file));
         }

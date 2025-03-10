@@ -21,7 +21,9 @@ public class IndexerService(IIndexerRepository indexerRepository) : IIndexerServ
 
     public async Task<PaginatedList<Email>> SearchEmailsAsync(string query, int pageIndex, int pageSize)
     {
-        return await indexerRepository.SearchEmailsAsync(query, pageIndex, pageSize);
+        query = query.ToLower();
+        var queryTerms = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return await indexerRepository.SearchEmailsAsync(queryTerms, pageIndex, pageSize);
     }
 
     public async Task IndexEmail(Email email)
@@ -32,24 +34,24 @@ public class IndexerService(IIndexerRepository indexerRepository) : IIndexerServ
         await indexerRepository.AddEmailAsync(email);
 
         // Split the email content into words
-        var wordList = email.Content.Split(' ');
+        var splitChars = new[] { ' ', '\n', '\r', '\t', '.', ',', '!', '?', ';', ':', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', '`', '~', '@', '#', '$', '%', '^', '&', '*', '-', '_', '+', '=', '"' };
+        var wordList = email.Content.Split(splitChars, StringSplitOptions.RemoveEmptyEntries).Select(w => w.ToLower()).ToList();
 
         // Find all unique words in the email and add them to the database
-        var words = wordList.Distinct().Select(w => new Word { Value = w }).ToList();
-        await indexerRepository.AddWordsAsync(words);
+        var uniqueWordValues = wordList.Distinct().ToList();
+        await indexerRepository.UpsertWordsAsync(uniqueWordValues);
 
         // For each word, find all occurrences in the email and add them to the database
         var occurrences = new List<Occurence>();
-        foreach (var word in words)
+        foreach (var word in uniqueWordValues)
         {
-            var occurrenceCount = wordList.Count(w => w == word.Value);
+            var occurrenceCount = wordList.Count(w => w == word);
+            
             occurrences.Add(new Occurence
             {
-                WordValue = word.Value,
+                WordValue = word,
                 EmailId = email.Id,
-                Count = occurrenceCount,
-                Word = word,
-                Email = email
+                Count = occurrenceCount
             });
         }
         

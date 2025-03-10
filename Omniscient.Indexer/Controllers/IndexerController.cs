@@ -15,8 +15,18 @@ public class IndexerController(IIndexerService indexerService) : ControllerBase
     }
     
     [HttpGet]
-    public async Task<IActionResult> GetEmailsPaginated([FromQuery] string search = "", [FromQuery] int pageIndex = 0, [FromQuery] int pageSize = 10)
-    {
+    public async Task<IActionResult> GetEmailsPaginated([FromQuery] string search = "", [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
+    { 
+        if (pageIndex < 1)
+        {
+            return BadRequest("Page index must be greater than 0.");
+        }
+        
+        if (pageSize < 1)
+        {
+            return BadRequest("Page size must be greater than 0.");
+        }
+        
         var emails = await indexerService.SearchEmailsAsync(search, pageIndex, pageSize);
         return Ok(emails);
     }

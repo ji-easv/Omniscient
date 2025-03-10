@@ -6,8 +6,8 @@ namespace Omniscient.Indexer.Infrastructure.Repository;
 public interface IIndexerRepository
 {
     Task<Email?> GetEmailAsync(Guid emailId);
-    Task<PaginatedList<Email>> SearchEmailsAsync(string query, int pageIndex, int pageSize);
-    Task AddWordsAsync(IEnumerable<Word> words);
-    Task AddOccurrencesAsync(IEnumerable<Occurence> occurences);
     Task<Email> AddEmailAsync(Email email);
+    Task<PaginatedList<Email>> SearchEmailsAsync(string[] queryTerms, int pageIndex, int pageSize);
+    Task AddOccurrencesAsync(IEnumerable<Occurence> occurrences);
+    Task UpsertWordsAsync(List<string> words);
 }
