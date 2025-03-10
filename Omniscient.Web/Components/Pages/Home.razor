@@ -1,7 +1,73 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@using Omniscient.Web.Models
+<PageTitle>Omniscient</PageTitle>
 
-<PageTitle>Home</PageTitle>
+<div class="container">
+    <h1>Search</h1>
+    <SearchBar OnSearch="HandleSearch" />
+    <DisplayList Emails="_emails" ItemsPerPage="5" />
+    
+</div>
+    
 
-<h1>Hello, world!</h1>
+@code {
+    private string _searchQuery = "";
+    private List<Email> _emails = new();
+    protected override void OnInitialized()
+    {
+        // Temporary list of emails for testing
+        _emails = new List<Email>
+        {
+            new Email
+            {
+                EmailId = Guid.NewGuid(),
+                FileName = "Test Email 1",
+                FullContent = "This is the content of the first test email."
+            },
+            new Email
+            {
+                EmailId = Guid.NewGuid(),
+                FileName = "Test Email 2",
+                FullContent = "This is the content of the second test email."
+            },
+            new Email
+            {
+                EmailId = Guid.NewGuid(),
+                FileName = "Test Email 3",
+                FullContent = "This is the content of the third test email."
+            },
+            new Email
+            {
+                EmailId = Guid.NewGuid(),
+                FileName = "Test Email 4",
+                FullContent = "This is the content of a test email."
+            },
+            new Email
+            {
+                EmailId = Guid.NewGuid(),
+                FileName = "Test Email 6",
+                FullContent = "Dear John,\n\nI hope this email finds you well and thriving. Today, I wanted to take a moment to share my thoughts on a subject that has been gaining more attention in recent years – the fascinating and irreplaceable role of bees in our ecosystem.\n\nAs many of us are aware, bees are often seen buzzing around our gardens, making their way from flower to flower, seemingly going about their business without much regard to the world around them. But beneath their seemingly simple lives lies a complex and vital function that affects nearly every aspect of our environment, agriculture, and even our own daily lives.\n\nTo begin with, bees are pollinators, and their role as such is absolutely indispensable. Pollination is the process by which pollen is transferred between plants, facilitating the reproduction of many species of plants, including the vast majority of the crops that humans rely on for food. In fact, it is estimated that around one-third of the food we consume is made possible by pollinators like bees. Fruits, vegetables, nuts, and even some seeds would be significantly reduced, or in some cases, entirely unavailable, without bees and other pollinators. Consider the humble apple, for instance. A bee's visit to an apple blossom is an essential step in the production of that apple. Without them, our access to such foods would be greatly diminished, leading to both ecological and economic repercussions.\n\nMoreover, the contribution of bees goes far beyond just the food industry. These incredible insects also play a crucial role in maintaining biodiversity. As they pollinate plants, bees are helping to sustain entire ecosystems, from the smallest wildflowers to larger plants that serve as the foundation for entire habitats. Many species of birds, mammals, and other insects rely on these plants for food, shelter, and survival. When bees are thriving, the entire food chain benefits, promoting a more balanced and resilient ecosystem. In contrast, the decline of bee populations can trigger a cascade of negative effects that disrupt these delicate ecological networks.\n\nUnfortunately, as much as bees contribute to the well-being of the planet, they are facing a number of serious threats. Habitat loss, pesticide use, climate change, and diseases are just a few of the factors that are contributing to their decline. It is troubling to think that, over the past few decades, bee populations have been on the decline at an alarming rate, and we are still working to fully understand the full scope of what is causing this. The disappearance of bees from certain regions has already resulted in reduced pollination of local crops and wild plants, which further threatens biodiversity and agricultural productivity.\n\nThe issue of bee decline has even garnered the attention of scientists, environmentalists, and policymakers around the world. The United Nations has recognized the critical importance of pollinators and has declared May 20th as World Bee Day to raise awareness and encourage action to protect these vital creatures. Efforts to conserve bees have led to the establishment of pollinator-friendly practices, such as planting wildflowers and native plants, reducing pesticide use, and creating bee habitats in urban and rural areas alike.\n\nThe beauty of this movement is that we all have a role to play in ensuring the survival of bees. It starts with small steps, such as avoiding the use of harmful pesticides in our gardens, supporting local farmers who practice sustainable farming methods, and planting flowers that attract bees. In addition, supporting organizations and initiatives that work to protect bees and promote environmental stewardship can have a lasting impact on bee populations. Together, we can create a more supportive environment for bees and other pollinators.\n\nOn a more personal note, I have recently started taking a deeper interest in how I can help support bee populations in my own community. Whether it’s by planting a bee-friendly garden or supporting local beekeepers, I have found that small, intentional actions can have a larger impact than I had previously realized. It's amazing how something as simple as a garden can provide both beauty and a lifeline to these essential creatures.\n\nIn conclusion, the role of bees in our world cannot be overstated. From their crucial contribution to our food supply to their support of biodiversity and ecosystem health, bees are undeniably vital to the well-being of our planet. As their populations continue to face challenges, it is essential that we recognize their importance and take action to protect them. Through collective efforts, we can ensure that these remarkable insects continue to thrive and contribute to the balance of our natural world.\n\nThank you for taking the time to read this message. I hope it has inspired you to consider the importance of bees in your own life and think about ways we can all contribute to their conservation. Please feel free to share your thoughts, ideas, or any questions you might have—I’d love to continue this conversation with you.\n\nWishing you a wonderful day, and remember, the next time you see a bee, it’s not just buzzing around aimlessly; it’s playing an irreplaceable part in the survival of life as we know it.\n\nWarm regards a bee enjoyer,"
+            },
+            new Email
+            {
+            EmailId = Guid.NewGuid(),
+            FileName = "Test Email 5",
+            FullContent = "This is the content of a test email."
+            },
+            new Email
+            {
+                EmailId = Guid.NewGuid(),
+                FileName = "Test Email 5",
+                FullContent = "This is the content of a test email."
+            },
+        };
+    }
 
-Welcome to your new app.
+    private async Task HandleSearch()
+    {
+
+        // TODO: Implement email search logic
+    }
+
+}
