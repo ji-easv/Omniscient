@@ -8,6 +8,9 @@ using Omniscient.Shared.Entities;
 using Omniscient.Cleaner.Infrastructure;
 using Omniscient.Cleaner.Infrastructure.Interfaces;
 
+using Omniscient.Cleaner.Infrastructure;
+using Omniscient.Cleaner.Infrastructure.Interfaces;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
