@@ -22,6 +22,20 @@ public class IndexerController(IIndexerService indexerService) : ControllerBase
         }
     }
     
+    [HttpGet("full-content/{emailId:guid}")]
+    public async Task<IActionResult> GetFullEmailContent(Guid emailId)
+    {
+        try
+        {
+            var email = await indexerService.GetFullEmailContent(emailId);
+            return Ok(email);
+        } 
+        catch (NotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
+    }
+    
     [HttpGet]
     public async Task<IActionResult> GetEmailsPaginated([FromQuery] string search = "", [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
     { 
