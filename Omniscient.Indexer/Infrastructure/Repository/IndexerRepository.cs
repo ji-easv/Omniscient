@@ -7,9 +7,16 @@ namespace Omniscient.Indexer.Infrastructure.Repository;
 
 public class IndexerRepository(AppDbContext context) : IIndexerRepository
 {
-    public Task<Email?> GetEmailAsync(Guid emailId)
+    public Task<Email?> GetEmailByIdAsync(Guid emailId)
     {
         return context.Emails.FirstOrDefaultAsync(e => e.Id == emailId);
+    }
+
+    public Task DeleteEmailAsync(Email email)
+    {
+        using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
+        context.Emails.Remove(email);
+        return context.SaveChangesAsync();
     }
 
     public async Task<PaginatedList<Email>> SearchEmailsAsync(string[] queryTerms, int pageIndex, int pageSize)
@@ -52,12 +59,18 @@ public class IndexerRepository(AppDbContext context) : IIndexerRepository
         await context.SaveChangesAsync();
         return result.Entity;
     }
-    
+
+    public async Task<Email?> GetEmailByFileName(string fileName)
+    {
+        using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
+        return await context.Emails.FirstOrDefaultAsync(e => e.FileName == fileName);
+    }
+
     public async Task UpsertWordsAsync(List<string> wordValues)
     {
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
         
-        // Execute raw SQL using ON CONFLICT DO NOTHING
+        // Execute raw SQL using ON CONFLICT DO NOTHING to avoid duplicate key errors due to race conditions
         foreach (var value in wordValues)
         {
             await context.Database.ExecuteSqlRawAsync(

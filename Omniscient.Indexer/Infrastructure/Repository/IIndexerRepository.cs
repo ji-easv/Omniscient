@@ -5,8 +5,11 @@ namespace Omniscient.Indexer.Infrastructure.Repository;
 
 public interface IIndexerRepository
 {
-    Task<Email?> GetEmailAsync(Guid emailId);
+    Task<Email?> GetEmailByIdAsync(Guid emailId);
+    Task<Email?> GetEmailByFileName(string fileName);
     Task<Email> AddEmailAsync(Email email);
+    Task DeleteEmailAsync(Email email);
+    
     Task<PaginatedList<Email>> SearchEmailsAsync(string[] queryTerms, int pageIndex, int pageSize);
     Task AddOccurrencesAsync(IEnumerable<Occurence> occurrences);
     Task UpsertWordsAsync(List<string> words);

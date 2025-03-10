@@ -1,29 +1,32 @@
 ﻿using Omniscient.ServiceDefaults;
 using Omniscient.Shared;
+using Omniscient.Shared.Dtos;
 using Omniscient.Shared.Entities;
+using Omniscient.Shared.Mappers;
 using IIndexerRepository = Omniscient.Indexer.Infrastructure.Repository.IIndexerRepository;
 
 namespace Omniscient.Indexer.Domain.Services;
 
-public class IndexerService(IIndexerRepository indexerRepository) : IIndexerService
+public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndexerService> logger) : IIndexerService
 {
-    public async Task<Email> GetEmailAsync(Guid emailId)
+    public async Task<EmailDto> GetEmailAsync(Guid emailId)
     {
-        var email = await indexerRepository.GetEmailAsync(emailId);
+        var email = await indexerRepository.GetEmailByIdAsync(emailId);
 
         if (email == null)
         {
             throw new Exception($"Email with id {emailId} not found");
         }
 
-        return email;
+        return email.ToDto();
     }
 
-    public async Task<PaginatedList<Email>> SearchEmailsAsync(string query, int pageIndex, int pageSize)
+    public async Task<PaginatedList<EmailDto>> SearchEmailsAsync(string query, int pageIndex, int pageSize)
     {
         query = query.ToLower();
         var queryTerms = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return await indexerRepository.SearchEmailsAsync(queryTerms, pageIndex, pageSize);
+        var emails = await indexerRepository.SearchEmailsAsync(queryTerms, pageIndex, pageSize);
+        return emails.MapTo(e => e.ToDto());
     }
 
     public async Task IndexEmail(Email email)
@@ -31,6 +34,12 @@ public class IndexerService(IIndexerRepository indexerRepository) : IIndexerServ
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
         
         // Add the email to the database
+        var existingEmail = await indexerRepository.GetEmailByFileName(email.FileName);
+        if (existingEmail != null)
+        {
+            logger.LogInformation("Email with file name {EmailFileName} already exists, deleting the existing email", email.FileName);
+            await indexerRepository.DeleteEmailAsync(existingEmail);
+        }
         await indexerRepository.AddEmailAsync(email);
 
         // Split the email content into words
