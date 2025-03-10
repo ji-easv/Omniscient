@@ -57,7 +57,7 @@ if (args.Contains("init") || args.Contains("--init"))
 
         if (fileSystemRepository != null)
         {
-            var fileContent = await fileSystemRepository.GetFiles(
+            await fileSystemRepository.ReadAndPublishFiles(
                 "/Users/mazur/Projects/School/PBSf25/1stSemester/DevelopmentOfLargeSystems/Week10-11/Omniscient/.enron-files/maildir");
         }
     }
