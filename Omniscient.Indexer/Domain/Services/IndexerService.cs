@@ -2,6 +2,7 @@
 using Omniscient.Shared;
 using Omniscient.Shared.Dtos;
 using Omniscient.Shared.Entities;
+using Omniscient.Shared.Exceptions;
 using Omniscient.Shared.Mappers;
 using IIndexerRepository = Omniscient.Indexer.Infrastructure.Repository.IIndexerRepository;
 
@@ -15,7 +16,7 @@ public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndex
 
         if (email == null)
         {
-            throw new Exception($"Email with id {emailId} not found");
+            throw new NotFoundException($"Email with id {emailId} not found");
         }
 
         return email.ToDto();

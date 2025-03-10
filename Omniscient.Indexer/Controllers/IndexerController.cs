@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Omniscient.Indexer.Domain.Services;
+using Omniscient.Shared.Exceptions;
 
 namespace Omniscient.Indexer.Controllers;
 
@@ -10,8 +11,15 @@ public class IndexerController(IIndexerService indexerService) : ControllerBase
     [HttpGet("{emailId:guid}")]
     public async Task<IActionResult> GetEmail(Guid emailId)
     {
-        var email = await indexerService.GetEmailAsync(emailId);
-        return Ok(email);
+        try
+        {
+            var email = await indexerService.GetEmailAsync(emailId);
+            return Ok(email);
+        } 
+        catch (NotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
     }
     
     [HttpGet]
