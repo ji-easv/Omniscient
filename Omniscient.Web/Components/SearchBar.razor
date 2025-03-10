@@ -2,21 +2,21 @@
     [Parameter]
     public EventCallback<string> OnSearch { get; set; }
 
-    private string searchQuery = "";
+    private string _searchQuery = "";
 
     private async Task HandleSearch()
     {
-        if (string.IsNullOrWhiteSpace(searchQuery))
+        if (string.IsNullOrWhiteSpace(_searchQuery))
             return;
-        Console.WriteLine("You writed to search for: " + searchQuery);
-        await OnSearch.InvokeAsync(searchQuery);
+
+        await OnSearch.InvokeAsync(_searchQuery);
     }
 }
 
 <div class="mb-4">
     <div class="input-group">
         <input type="text" class="form-control"
-               @bind="searchQuery"
+               @bind="_searchQuery"
                @bind:event="oninput"
                @onkeyup="HandleSearch"
                placeholder="Search emails..." />

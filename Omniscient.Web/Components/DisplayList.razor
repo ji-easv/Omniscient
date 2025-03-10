@@ -1,10 +1,13 @@
-﻿@using Omniscient.Web.Models
+﻿@using Omniscient.Shared
+@using Omniscient.Shared.Dtos
+@using Omniscient.Shared.Entities
 
 <div class="email-grid">
-    @if (Emails == null || !Emails.Any())
+    @if (Emails == null || Emails.TotalCount == 0)
     {
         <p>No emails found.</p>
     }
+    
     else if (SelectedEmail != null)
     {
         <div class="email-detail">
@@ -20,20 +23,20 @@
                 </div>
             </div>
             <div class="email-content border rounded p-3">
-                <pre>@SelectedEmail.FullContent</pre>
+                <pre>@SelectedEmail.Content</pre>
             </div>
         </div>
     }
     else
     {
         <div class="list-group">
-            @foreach (var email in CurrentPageEmails)
+            @foreach (var email in Emails.Items)
             {
                 <div class="list-group-item list-group-item-action" @onclick="() => ViewEmail(email)">
                     <div class="d-flex w-100 justify-content-between">
                         <h5 class="mb-1">@email.FileName</h5>
                     </div>
-                    <p class="mb-1">@(email.FullContent.Length > 150 ? email.FullContent.Substring(0, 150) + "..." : email.FullContent)</p>
+                    <p class="mb-1">@(email.ContentPreview + "...")</p>
                 </div>
             }
         </div>
@@ -45,7 +48,7 @@
                         <button class="page-link" @onclick="() => GoToPage(CurrentPage - 1)" disabled="@(CurrentPage == 1)">Previous</button>
                     </li>
 
-                    @for (int i = 1; i <= TotalPages; i++)
+                    @for (var i = 1; i <= TotalPages; i++)
                     {
                         var pageNumber = i;
                         <li class="page-item @(CurrentPage == pageNumber ? "active" : "")">
@@ -63,38 +66,35 @@
 </div>
 
 @code {
+    [Parameter, EditorRequired]
+    public PaginatedList<EmailDto>? Emails { get; set; } 
+    
+    [Parameter, EditorRequired]
+    public EventCallback<int> OnPageChange { get; set; }
+    
+    [Parameter, EditorRequired]
+    public EventCallback<Guid> OnEmailSelected { get; set; }
+    
     [Parameter]
-    public List<Email> Emails { get; set; } = new();
-
-    [Parameter]
-    public int ItemsPerPage { get; set; } = 3;
-
-    private int CurrentPage { get; set; } = 1;
-    private Email? SelectedEmail { get; set; }
-
-    private int TotalPages => (int)Math.Ceiling(Emails.Count / (double)ItemsPerPage);
-
-    private List<Email> CurrentPageEmails => Emails
-        .Skip((CurrentPage - 1) * ItemsPerPage)
-        .Take(ItemsPerPage)
-        .ToList();
-
+    public Email? SelectedEmail { get; set; }
+    
     private void GoToPage(int pageNumber)
     {
-        if (pageNumber >= 1 && pageNumber <= TotalPages)
-        {
-            CurrentPage = pageNumber;
-        }
+        OnPageChange.InvokeAsync(pageNumber);
     }
 
-    private void ViewEmail(Email email)
+    private async Task ViewEmail(EmailDto email)
     {
-        SelectedEmail = email;
+        await OnEmailSelected.InvokeAsync(email.Id);
     }
 
     private void DownloadEmail()
     {
         // TODO: Implement email download functionality
-        Console.WriteLine($"Download requested for email: {SelectedEmail?.FileName}");
+       Console.WriteLine($"Download requested for email: {SelectedEmail?.FileName}");
     }
+    
+    private int CurrentPage => Emails?.PageIndex ?? 0;
+    private int TotalPages => Emails?.TotalPages ?? 0;
+    private int TotalItems => Emails?.TotalCount ?? 0;
 }
