@@ -5,6 +5,9 @@ using Omniscient.RabbitMQClient.Messages;
 using Omniscient.ServiceDefaults;
 using Omniscient.Shared.Entities;
 
+using Omniscient.Cleaner.Infrastructure;
+using Omniscient.Cleaner.Infrastructure.Interfaces;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -14,6 +17,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddRabbitMqDependencies();
 
 builder.AddServiceDefaults();
+builder.Services.AddTransient<IFileSystemRepository, FileSystemRepository>();
 
 var app = builder.Build();
 
@@ -41,6 +45,27 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+if (args.Contains("init") || args.Contains("--init"))
+{
+    var filePath = args
+        .FirstOrDefault(arg => arg.StartsWith("--path=", StringComparison.OrdinalIgnoreCase))
+        ?.Substring("--path=".Length);
+
+    filePath ??= Path.Combine(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..")), ".enron-files", "maildir");
+
+    using (var scope = app.Services.CreateScope())
+    {
+        var fileSystemRepository = scope.ServiceProvider.GetService<IFileSystemRepository>();
+        if (fileSystemRepository != null)
+        {
+            await fileSystemRepository.ReadAndPublishFiles(filePath);
+        }
+    }
+}
+
+
+
 
 app.UseHttpsRedirection();
 

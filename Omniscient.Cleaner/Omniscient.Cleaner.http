@@ -1,6 +1,0 @@
-@Cleaner_HostAddress = http://localhost:5085
-
-GET {{Cleaner_HostAddress}}/publish/
-Accept: application/json
-
-###

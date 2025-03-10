@@ -18,6 +18,16 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "https_init": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "commandLineArgs": "--init",
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:7263;http://localhost:5085",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
     }
   }
 }
