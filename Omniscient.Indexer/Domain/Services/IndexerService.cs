@@ -67,4 +67,15 @@ public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndex
         
         await indexerRepository.AddOccurrencesAsync(occurrences);
     }
+
+    public async Task<string> GetFullEmailContent(Guid emailId)
+    {
+        var email = await indexerRepository.GetEmailByIdAsync(emailId);
+        if (email == null)
+        {
+            throw new NotFoundException($"Email with id {emailId} not found");
+        }
+        
+        return email.Content;
+    }
 }
