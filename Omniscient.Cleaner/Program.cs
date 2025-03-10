@@ -8,9 +8,6 @@ using Omniscient.Shared.Entities;
 using Omniscient.Cleaner.Infrastructure;
 using Omniscient.Cleaner.Infrastructure.Interfaces;
 
-using Omniscient.Cleaner.Infrastructure;
-using Omniscient.Cleaner.Infrastructure.Interfaces;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -51,17 +48,22 @@ if (app.Environment.IsDevelopment())
 
 if (args.Contains("init") || args.Contains("--init"))
 {
+    var filePath = args
+        .FirstOrDefault(arg => arg.StartsWith("--path=", StringComparison.OrdinalIgnoreCase))
+        ?.Substring("--path=".Length);
+
+    filePath ??= Path.Combine(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..")), ".enron-files", "maildir");
+
     using (var scope = app.Services.CreateScope())
     {
         var fileSystemRepository = scope.ServiceProvider.GetService<IFileSystemRepository>();
-
         if (fileSystemRepository != null)
         {
-            await fileSystemRepository.ReadAndPublishFiles(
-                "/Users/mazur/Projects/School/PBSf25/1stSemester/DevelopmentOfLargeSystems/Week10-11/Omniscient/.enron-files/maildir");
+            await fileSystemRepository.ReadAndPublishFiles(filePath);
         }
     }
 }
+
 
 
 
