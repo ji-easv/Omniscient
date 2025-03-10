@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace Omniscient.Cleaner.Utilities;
 
 public static class EmailStringCleaner
@@ -9,13 +11,16 @@ public static class EmailStringCleaner
     /// <returns>The content without the headers.</returns>
     public static string RemoveHeaders(string content)
     {
-        string delimiter = Environment.NewLine + Environment.NewLine;
-        int index = content.IndexOf(delimiter, StringComparison.Ordinal);
-        if (index >= 0)
+        var pattern = @"^(?:(?!\r?\n\r?\n).)*\r?\n\r?\n";
+        var regex = new Regex(pattern, RegexOptions.Singleline);
+
+        var match = regex.Match(content);
+        if (match.Success)
         {
-            return content.Substring(index + delimiter.Length);
+            return content.Substring(match.Length).TrimStart();
         }
 
         return content;
     }
+
 }

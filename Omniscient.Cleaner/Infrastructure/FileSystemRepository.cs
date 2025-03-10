@@ -88,7 +88,9 @@ namespace Omniscient.Cleaner.Infrastructure
                 throw new Exception("No path provided to search for files.");
             }
 
-            var allFiles = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories);
+            var allFiles = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
+                .Where(file => !Path.GetFileName(file).Equals(".DS_Store", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
 
             _logger.LogInformation($"Found {allFiles.Length} files in {path}.");
 
