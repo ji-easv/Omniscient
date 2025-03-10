@@ -29,7 +29,9 @@ namespace Omniscient.Cleaner.Infrastructure
             }
 
             var filesDictionary = new ConcurrentDictionary<string, string>();
-            var allFiles = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories);
+            var allFiles = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
+                .Where(file => !Path.GetFileName(file).Equals(".DS_Store", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
 
             _logger.LogInformation($"Found {allFiles.Length} files in {path}.");
 
@@ -52,7 +54,7 @@ namespace Omniscient.Cleaner.Infrastructure
 
                         var textContent = await File.ReadAllTextAsync(file);
 
-                        filesDictionary[relativePath] = textContent;
+                        filesDictionary[relativePath] = EmailStringCleaner.RemoveHeaders(textContent);
 
                         int current = Interlocked.Increment(ref processedFiles);
                         int percentage = (current * 100) / allFiles.Length;
