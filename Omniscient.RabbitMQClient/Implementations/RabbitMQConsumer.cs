@@ -1,4 +1,5 @@
 ﻿using EasyNetQ;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Omniscient.RabbitMQClient.Interfaces;
 using Omniscient.RabbitMQClient.Messages;
@@ -6,7 +7,7 @@ using Serilog;
 
 namespace Omniscient.RabbitMQClient.Implementations;
 
-public class RabbitMqConsumer(IBus bus) : BackgroundService, IAsyncConsumer
+public class RabbitMqConsumer(IBus bus, IServiceProvider serviceProvider) : BackgroundService, IAsyncConsumer
 {
     private readonly Dictionary<string, IDisposable> _subscriptions = new();
     
@@ -25,7 +26,7 @@ public class RabbitMqConsumer(IBus bus) : BackgroundService, IAsyncConsumer
                 .GetGenericArguments()[0];
             Log.Information("Found handler {HandlerTypeName} for message type {MessageTypeName}", handlerType.Name, messageType.Name);
             
-            var handlerInstance = Activator.CreateInstance(handlerType);
+            var handlerInstance = ActivatorUtilities.CreateInstance(serviceProvider, handlerType);
             if (handlerInstance == null)
             {
                 Log.Information("Could not create instance of handler {HandlerTypeName}", handlerType.Name);

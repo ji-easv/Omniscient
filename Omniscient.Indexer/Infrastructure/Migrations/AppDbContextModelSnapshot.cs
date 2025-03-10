@@ -38,7 +38,7 @@ namespace Omniscient.Indexer.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Emails", (string)null);
+                    b.ToTable("Emails");
                 });
 
             modelBuilder.Entity("Omniscient.Shared.Entities.Occurence", b =>
@@ -56,7 +56,7 @@ namespace Omniscient.Indexer.Infrastructure.Migrations
 
                     b.HasIndex("EmailId");
 
-                    b.ToTable("Occurences", (string)null);
+                    b.ToTable("Occurrences");
                 });
 
             modelBuilder.Entity("Omniscient.Shared.Entities.Word", b =>
@@ -66,7 +66,7 @@ namespace Omniscient.Indexer.Infrastructure.Migrations
 
                     b.HasKey("Value");
 
-                    b.ToTable("Words", (string)null);
+                    b.ToTable("Words");
                 });
 
             modelBuilder.Entity("Omniscient.Shared.Entities.Occurence", b =>

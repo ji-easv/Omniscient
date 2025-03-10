@@ -6,6 +6,6 @@ namespace Omniscient.Indexer.Domain.Services;
 public interface IIndexerService
 {
     Task<Email> GetEmailAsync(Guid emailId);
-    
     Task<PaginatedList<Email>> SearchEmailsAsync(string query, int pageIndex, int pageSize);
+    Task IndexEmail(Email email);
 }
