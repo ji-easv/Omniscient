@@ -1,24 +1,56 @@
-﻿@code {
+﻿@using System.Timers
+
+@code {
     [Parameter]
     public EventCallback<string> OnSearch { get; set; }
 
     private string _searchQuery = "";
-
+    
+    private int _debounceTimeMs = 500;
+    private Timer _debounceTimer;
+    
+    protected override void OnInitialized()
+    {
+        _debounceTimer = new Timer(_debounceTimeMs);
+        _debounceTimer.Elapsed += OnTimerElapsed;
+        _debounceTimer.AutoReset = false;
+    }
+    
+    private async void OnTimerElapsed(object sender, ElapsedEventArgs e)
+    {
+        await InvokeAsync(async () => 
+        {
+            await OnSearch.InvokeAsync(_searchQuery);
+        });
+    }
+    
     private async Task HandleSearch()
     {
         if (string.IsNullOrWhiteSpace(_searchQuery))
             return;
 
+        // For button clicks, search immediately
+        _debounceTimer.Stop();
         await OnSearch.InvokeAsync(_searchQuery);
+    }
+
+    private void HandleInputChange(ChangeEventArgs e)
+    {
+        _searchQuery = e.Value?.ToString() ?? "";
+        _debounceTimer.Stop();
+        _debounceTimer.Start();
+    }
+    
+    public void Dispose()
+    {
+        _debounceTimer?.Dispose();
     }
 }
 
 <div class="mb-4">
     <div class="input-group">
         <input type="text" class="form-control"
-               @bind="_searchQuery"
-               @bind:event="oninput"
-               @onkeyup="HandleSearch"
+               @oninput="HandleInputChange"
                placeholder="Search emails..." />
         <button class="btn btn-primary" @onclick="HandleSearch">
             Search

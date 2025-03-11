@@ -1,0 +1,26 @@
+﻿@using Omniscient.Shared.Dtos
+
+<div class="email-detail">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@SelectedEmailDto?.FileName</h3>
+        <div>
+            <button class="btn btn-secondary" @onclick="() => OnBackPressed.InvokeAsync()" title="Back to list">
+                Back to list
+            </button>
+        </div>
+    </div>
+    <div class="email-content border rounded p-3">
+        <pre>@SelectedEmailContent</pre>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string? SelectedEmailContent { get; set; }
+    
+    [Parameter]
+    public EmailDto? SelectedEmailDto { get; set; }
+    
+    [Parameter, EditorRequired]
+    public EventCallback OnBackPressed { get; set; }
+}

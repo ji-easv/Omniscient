@@ -12,16 +12,32 @@
 
 <div class="container">
     <h1>Search</h1>
-    <SearchBar OnSearch="HandleSearch" />
-    <DisplayList Emails="_emails" OnPageChange="ChangePageIndex" OnEmailSelected="ViewEmail" 
-                 SelectedEmailContent="@_selectedEmailContent" SelectedEmailDto="@_selectedEmailDto"/>
+    <SearchBar OnSearch="HandleSearch"/>
+
+    @if (_selectedEmailDto is not null)
+    {
+        <EmailDetailView SelectedEmailContent="@_selectedEmailContent" SelectedEmailDto="@_selectedEmailDto"
+                         OnBackPressed="OnBackPressed"/>
+    }
+    else
+    {
+        @if (_isSearching)
+        {
+            <p>Searching...</p>
+        }
+        else
+        {
+            <DisplayList Emails="_emails" OnPageChange="ChangePageIndex" OnEmailSelected="ViewEmail"/>
+        }
+    }
 </div>
 
 
 @code {
     private PaginatedList<EmailDto>? _emails;
     private string _query = string.Empty;
-    
+    private bool _isSearching;
+
     private string? _selectedEmailContent;
     private EmailDto? _selectedEmailDto;
 
@@ -29,16 +45,19 @@
     {
         await Search(_query);
     }
-    
+
     private async Task HandleSearch(string query)
     {
         await Search(query);
     }
-    
+
     private async Task Search(string query, int pageIndex = 1, int pageSize = 10)
     {
+        OnBackPressed();
+        _isSearching = true;
         _query = query;
         _emails = await IndexerClient.SearchEmailsAsync(_query, pageIndex, pageSize);
+        _isSearching = false;
     }
 
     private async Task ChangePageIndex(int pageIndex)
@@ -50,5 +69,11 @@
     {
         _selectedEmailDto = emailDto;
         _selectedEmailContent = await IndexerClient.GetFullContentAsync(emailDto.Id);
+    }
+
+    private void OnBackPressed()
+    {
+        _selectedEmailDto = null;
+        _selectedEmailContent = null;
     }
 }
