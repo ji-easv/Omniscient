@@ -3,30 +3,11 @@
 @using Omniscient.Shared.Entities
 
 <div class="email-grid">
-    @if (Emails == null || Emails.TotalCount == 0)
+    @if (Emails is null || Emails.TotalCount == 0)
     {
         <p>No emails found.</p>
     }
     
-    else if (SelectedEmailDto != null && !string.IsNullOrWhiteSpace(SelectedEmailContent))
-    {
-        <div class="email-detail">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3>@SelectedEmailDto.FileName</h3>
-                <div>
-                    <button class="btn btn-primary me-2" @onclick="DownloadEmail" title="Download email">
-                       Download
-                    </button>
-                    <button class="btn btn-secondary" @onclick="() => SelectedEmailContent = null" title="Back to list">
-                        Back to list
-                    </button>
-                </div>
-            </div>
-            <div class="email-content border rounded p-3">
-                <pre>@SelectedEmailContent</pre>
-            </div>
-        </div>
-    }
     else
     {
         <div class="list-group">
@@ -45,7 +26,9 @@
             <nav>
                 <ul class="pagination">
                     <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
-                        <button class="page-link" @onclick="() => GoToPage(CurrentPage - 1)" disabled="@(CurrentPage == 1)">Previous</button>
+                        <button class="page-link" @onclick="() => GoToPage(CurrentPage - 1)"
+                                disabled="@(CurrentPage == 1)">Previous
+                        </button>
                     </li>
 
                     @for (var i = 1; i <= TotalPages; i++)
@@ -57,7 +40,9 @@
                     }
 
                     <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
-                        <button class="page-link" @onclick="() => GoToPage(CurrentPage + 1)" disabled="@(CurrentPage == TotalPages)">Next</button>
+                        <button class="page-link" @onclick="() => GoToPage(CurrentPage + 1)"
+                                disabled="@(CurrentPage == TotalPages)">Next
+                        </button>
                     </li>
                 </ul>
             </nav>
@@ -66,21 +51,12 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired]
-    public PaginatedList<EmailDto>? Emails { get; set; } 
-    
-    [Parameter, EditorRequired]
-    public EventCallback<int> OnPageChange { get; set; }
-    
-    [Parameter, EditorRequired]
-    public EventCallback<EmailDto> OnEmailSelected { get; set; }
-    
-    [Parameter]
-    public string? SelectedEmailContent { get; set; }
-    
-    [Parameter]
-    public EmailDto? SelectedEmailDto { get; set; }
-    
+    [Parameter, EditorRequired] public PaginatedList<EmailDto>? Emails { get; set; }
+
+    [Parameter, EditorRequired] public EventCallback<int> OnPageChange { get; set; }
+
+    [Parameter, EditorRequired] public EventCallback<EmailDto> OnEmailSelected { get; set; }
+
     private void GoToPage(int pageNumber)
     {
         OnPageChange.InvokeAsync(pageNumber);
@@ -91,12 +67,6 @@
         await OnEmailSelected.InvokeAsync(emailDto);
     }
 
-    private void DownloadEmail()
-    {
-        // TODO: Implement email download functionality
-       Console.WriteLine($"Download requested for email: {SelectedEmailDto?.FileName}");
-    }
-    
     private int CurrentPage => Emails?.PageIndex ?? 0;
     private int TotalPages => Emails?.TotalPages ?? 0;
     private int TotalItems => Emails?.TotalCount ?? 0;

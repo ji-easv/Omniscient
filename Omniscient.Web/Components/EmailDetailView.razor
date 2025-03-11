@@ -1,0 +1,40 @@
+﻿@using Omniscient.Shared.Dtos
+
+@inject IJSRuntime JSRuntime
+
+<div class="email-detail">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@SelectedEmailDto?.FileName</h3>
+        <div>
+            <button class="btn btn-primary me-2" @onclick="DownloadEmail" title="Download email">
+                Download
+            </button>
+            <button class="btn btn-secondary" @onclick="() => OnBackPressed.InvokeAsync()" title="Back to list">
+                Back to list
+            </button>
+        </div>
+    </div>
+    <div class="email-content border rounded p-3">
+        <pre>@SelectedEmailContent</pre>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string? SelectedEmailContent { get; set; }
+    
+    [Parameter]
+    public EmailDto? SelectedEmailDto { get; set; }
+    
+    [Parameter, EditorRequired]
+    public EventCallback OnBackPressed { get; set; }
+
+    private async Task DownloadEmail()
+    {
+        if (SelectedEmailContent != null && SelectedEmailDto != null)
+        {
+            var fileName = $"{SelectedEmailDto.FileName}.txt";
+            await JSRuntime.InvokeVoidAsync("downloadFileFromText", fileName, SelectedEmailContent);
+        }
+    }
+}

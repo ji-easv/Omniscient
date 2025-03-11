@@ -22,27 +22,43 @@ public class IndexerRepository(AppDbContext context) : IIndexerRepository
     public async Task<PaginatedList<Email>> SearchEmailsAsync(string[] queryTerms, int pageIndex, int pageSize)
     {
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
-        
-        // Find emails with most occurrences of the query terms
-        var allEmailIds = await context.Occurrences
+
+        // Find email IDs with most occurrences of the query terms
+        var emailScoresQuery = context.Occurrences
             .Where(o => queryTerms.Contains(o.WordValue))
             .GroupBy(o => o.EmailId)
-            .OrderByDescending(g => g.Count())
-            .Select(g => g.Key)
-            .Distinct()
-            .ToListAsync();
-        
-        // Get the emails
-        var allEmails = await context.Emails
-            .Where(e => allEmailIds.Contains(e.Id))
-            .ToListAsync();
-        
-        var emails = allEmails
+            .Select(g => new
+            {
+                EmailId = g.Key,
+                // Number of unique query terms matched (primary ranking factor)
+                UniqueTermsMatched = g.Select(o => o.WordValue).Distinct().Count(),
+                // Total occurrences as secondary factor
+                TotalOccurrences = g.Sum(o => o.Count)
+            })
+            .OrderByDescending(g => g.UniqueTermsMatched)
+            .ThenByDescending(g => g.TotalOccurrences);
+
+        // Get the total count of matching emails
+        var totalCount = await emailScoresQuery.CountAsync();
+
+        // Apply pagination to the email IDs query
+        var paginatedEmailIds = await emailScoresQuery
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
-            .ToList();
+            .Select(x => x.EmailId)
+            .ToListAsync();
+
+        // Get the emails based on the paginated email IDs
+        var emails = await context.Emails
+            .Where(e => paginatedEmailIds.Contains(e.Id))
+            .ToListAsync();
         
-        return new PaginatedList<Email>(emails, allEmails.Count, pageIndex, pageSize);
+        var orderedEmails = paginatedEmailIds
+            .Select(id => emails.FirstOrDefault(e => e.Id == id))
+            .Where(e => e != null)
+            .ToList();
+
+        return new PaginatedList<Email>(orderedEmails, totalCount, pageIndex, pageSize);
     }
     
     public async Task AddOccurrencesAsync(IEnumerable<Occurence> occurrences)
