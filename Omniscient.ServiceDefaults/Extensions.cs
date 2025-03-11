@@ -9,7 +9,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Serilog;
-using Serilog.Enrichers.Span;
+using Serilog.Events;
 
 namespace Omniscient.ServiceDefaults;
 
@@ -127,14 +127,25 @@ public static class Extensions
 
     private static TBuilder ConfigureSerilog<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        builder.Logging.ClearProviders();
+
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Warning() // TODO: revert
-            .Enrich.WithSpan()
-            .WriteTo.Seq("http://localhost:5341")
-            // .WriteTo.Console() TODO: revert
+            // Set the default minimum level as Debug
+            .MinimumLevel.Is(LogEventLevel.Debug)
+            // Override specific categories:
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Debug)
+            // Enrich log events with additional context information
+            .Enrich.FromLogContext()
+            .Enrich.WithMachineName()
+            .Enrich.WithThreadId()
+            // Write logs to console with a custom output template
+            .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss}|{MachineName}|{ThreadId}|{RequestId}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
             .CreateLogger();
 
         builder.Logging.AddSerilog();
+
         return builder;
     }
 }
