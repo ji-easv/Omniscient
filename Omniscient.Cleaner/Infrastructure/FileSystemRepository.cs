@@ -49,6 +49,7 @@ public class FileSystemRepository : IFileSystemRepository
 
         foreach (var file in allFiles.Take(10)) // TODO: revert Take(10)
         {
+            await _semaphore.WaitAsync();
             tasks.Add(ProcessSingleFile(file));
         }
 
@@ -58,7 +59,6 @@ public class FileSystemRepository : IFileSystemRepository
     private async Task ProcessSingleFile(string file)
     {
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
-        await _semaphore.WaitAsync();
 
         try
         {
