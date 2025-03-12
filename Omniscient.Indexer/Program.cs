@@ -7,9 +7,11 @@ using Omniscient.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var connectionString = builder.Configuration.GetConnectionString("DatabaseConnection");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseNpgsql(connectionString ?? throw new Exception("Connection string cannot be null"));
 });
 
 // Add services to the container.
