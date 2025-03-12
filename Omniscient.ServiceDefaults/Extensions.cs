@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Events;
@@ -19,6 +20,28 @@ namespace Omniscient.ServiceDefaults;
 // To learn more about using this project, see https://aka.ms/dotnet/aspire/service-defaults
 public static class Extensions
 {
+    private static string GetInstanceIdentifier()
+    {
+        // First check if we have a custom service instance identifier set
+        var serviceInstance = Environment.GetEnvironmentVariable("SERVICE_INSTANCE_ID");
+        if (!string.IsNullOrEmpty(serviceInstance))
+        {
+            return serviceInstance;
+        }
+    
+        // Otherwise use container ID (hostname)
+        var containerId = Environment.GetEnvironmentVariable("HOSTNAME") ?? Environment.MachineName;
+    
+        // Try to get service name from environment
+        var serviceName = Environment.GetEnvironmentVariable("SERVICE_NAME");
+        if (!string.IsNullOrEmpty(serviceName))
+        {
+            return $"{serviceName}.{containerId[..8]}";
+        }
+    
+        return containerId;
+    }
+    
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.ConfigureSerilog();
@@ -55,8 +78,20 @@ public static class Extensions
             logging.IncludeFormattedMessage = true;
             logging.IncludeScopes = true;
         });
+        
+        var instanceId = builder.Properties.TryGetValue("InstanceId", out var id)
+            ? id.ToString() 
+            : GetInstanceIdentifier();
 
         builder.Services.AddOpenTelemetry()
+            .ConfigureResource(resource =>
+            {
+                // Add service name and instance ID to resource attributes for easier trace filtering
+                resource.AddAttributes(new[]
+                {
+                    new KeyValuePair<string, object>("service.replica.id", instanceId)
+                });
+            })
             .WithMetrics(metrics =>
             {
                 metrics.AddAspNetCoreInstrumentation()
@@ -67,8 +102,6 @@ public static class Extensions
             {
                 tracing.AddSource(ActivitySources.OmniscientActivitySource.Name)
                     .AddAspNetCoreInstrumentation()
-                    // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
-                    //.AddGrpcClientInstrumentation()
                     .AddHttpClientInstrumentation();
             });
 
@@ -137,7 +170,6 @@ public static class Extensions
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Debug)
             // Enrich log events with additional context information
             .Enrich.FromLogContext()
-            .Enrich.WithMachineName()
             .Enrich.WithThreadId()
             // Write logs to console with a custom output template
             .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss}|{MachineName}|{ThreadId}|{RequestId}|{Level:u3}|{Message:lj}{NewLine}{Exception}")

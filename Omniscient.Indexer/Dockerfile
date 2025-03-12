@@ -1,5 +1,4 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-USER $APP_UID
 WORKDIR /app
 EXPOSE 8081
 
@@ -20,6 +19,10 @@ ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "Omniscient.Indexer.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
+RUN apt-get update && apt-get install -y netcat-openbsd
+COPY wait-for-rmq-postgres.sh /app/wait-for-rmq-postgres.sh
+RUN chmod +x /app/wait-for-rmq-postgres.sh
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Omniscient.Indexer.dll"]
+ENTRYPOINT ["/app/wait-for-rmq-postgres.sh"]
+CMD ["dotnet", "Omniscient.Indexer.dll"]

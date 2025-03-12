@@ -31,13 +31,12 @@
   
   cleaner-service:
     image: omniscient-cleaner-service
-    depends_on:
-      - rabbitmq
-      - postgres_db
     environment:
       - RABBITMQ_HOST=rabbitmq
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_RESOURCE_ATTRIBUTES=service.name=Omniscient.Cleaner
+      - SERVICE_INSTANCE_ID={{.Service.Name}}.{{.Task.Slot}}.{{.Task.ID}}
+      - WAIT_HOSTS=rabbitmq:5672,postgres_db:5432
     networks:
       - omniscient
     deploy:
@@ -45,13 +44,10 @@
         condition: on-failure
     volumes:
       - ./.enron-files:/app/.enron-files
-    command: [ "--init", "--path=/app/.enron-files/maildir" ]
+    command: ["dotnet", "Omniscient.Cleaner.dll", "--init", "--path=/app/.enron-files/maildir" ]
   
   indexer-service:
     image: omniscient-indexer-service
-    depends_on:
-      - rabbitmq
-      - postgres_db
     expose:
       - "8081"
     environment:
@@ -60,13 +56,15 @@
       - POSTGRES_CONNECTION_STRING=HOST=postgres_db;PORT=5432;DB=Omniscient;UID=root;PWD=password;
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Indexer
+      - SERVICE_INSTANCE_ID={{.Service.Name}}.{{.Task.Slot}}.{{.Task.ID}}
+      - WAIT_HOSTS=rabbitmq:5672,postgres_db:5432
     networks:
       - omniscient
     deploy:
       restart_policy:
         condition: on-failure
       mode: replicated 
-      replicas: 3
+      replicas: 1 # TODO: Increase replicas to 3
   
   blazor-ui:
     image: omniscient-blazor-ui
@@ -80,6 +78,7 @@
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Web
       - INDEXER_BASE_ADDRESS=http://indexer-service:8081/
+      - SERVICE_INSTANCE_ID={{.Service.Name}}.{{.Task.Slot}}.{{.Task.ID}}
   
   dotnet-aspire:
     image:  mcr.microsoft.com/dotnet/aspire-dashboard:latest
