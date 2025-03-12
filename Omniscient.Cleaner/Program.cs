@@ -10,9 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddRabbitMqDependencies();
-
+builder.AddRabbitMqDependencies();
 builder.AddServiceDefaults();
+
 builder.Services.AddTransient<IFileSystemRepository, FileSystemRepository>();
 
 builder.Services.AddHostedService(sp => new FileSystemService(
