@@ -4,7 +4,6 @@ using Omniscient.Indexer.Infrastructure;
 using Omniscient.Indexer.Infrastructure.Repository;
 using Omniscient.RabbitMQClient;
 using Omniscient.ServiceDefaults;
-using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +11,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var connectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING")
                            ?? builder.Configuration.GetConnectionString("DefaultConnection");
-    Log.Information("Using connection string: {connectionString}", connectionString);
     options.UseNpgsql(connectionString);
 });
 

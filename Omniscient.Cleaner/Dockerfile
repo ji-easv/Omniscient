@@ -1,13 +1,15 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 USER $APP_UID
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
+EXPOSE 81
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Omniscient.Cleaner/Omniscient.Cleaner.csproj", "Omniscient.Cleaner/"]
+COPY ["Omniscient.ServiceDefaults/Omniscient.ServiceDefaults.csproj", "Omniscient.ServiceDefaults/"]
+COPY ["Omniscient.RabbitMQClient/Omniscient.RabbitMQClient.csproj", "Omniscient.RabbitMQClient/"]
+COPY ["Omniscient.Shared/Omniscient.Shared.csproj", "Omniscient.Shared/"]
 RUN dotnet restore "Omniscient.Cleaner/Omniscient.Cleaner.csproj"
 COPY . .
 WORKDIR "/src/Omniscient.Cleaner"
