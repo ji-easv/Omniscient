@@ -48,7 +48,7 @@
     networks:
       - omniscient
   jaeger:
-    image: jaegertracing/all-in-one:latest
+    image: jaegertracing/jaeger:latest
     container_name: jaeger
     environment:
       - COLLECTOR_OTLP_ENABLED=true
