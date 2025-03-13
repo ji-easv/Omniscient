@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using Omniscient.Cleaner.Infrastructure.Interfaces;
 using Omniscient.Cleaner.Utilities;
 using Omniscient.RabbitMQClient.Interfaces;
@@ -11,6 +12,7 @@ public class FileSystemRepository : IFileSystemRepository
 {
     private readonly ILogger<FileSystemRepository> _logger;
     private readonly IAsyncPublisher _publisher;
+    private readonly IOptions<FileSystemOptions> _options;
     private readonly object _logLock = new();
 
     private const int BatchSize = 5000;
@@ -22,10 +24,11 @@ public class FileSystemRepository : IFileSystemRepository
     private int _allFilesCount = 0;
     private string _path = string.Empty;
 
-    public FileSystemRepository(ILogger<FileSystemRepository> logger, IAsyncPublisher publisher)
+    public FileSystemRepository(ILogger<FileSystemRepository> logger, IAsyncPublisher publisher, IOptions<FileSystemOptions> options)
     {
         _logger = logger;
         _publisher = publisher;
+        _options = options;
     }
 
     public async Task ReadAndPublishFiles(string? path)
@@ -41,6 +44,14 @@ public class FileSystemRepository : IFileSystemRepository
         var allFiles = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
             .Where(file => !Path.GetFileName(file).Equals(".DS_Store", StringComparison.OrdinalIgnoreCase))
             .ToArray();
+
+        // To not spend long time waiting for fetching all the files we limit this to download 4000 mails, and if you want to fetch all provide --no-limit
+        if (_options.Value.LimitFiles)
+        {
+            allFiles = allFiles
+                .Take(4000)
+                .ToArray();
+        }
 
         _allFilesCount = allFiles.Length;
         _path = path;
