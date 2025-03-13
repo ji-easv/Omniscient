@@ -30,74 +30,67 @@
       - omniscient
   
   cleaner-service:
-    build:
-      context: .
-      dockerfile: Omniscient.Cleaner/Dockerfile
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      postgres_db:
-        condition: service_healthy
+    image: omniscient-cleaner-service
     environment:
       - RABBITMQ_HOST=rabbitmq
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_RESOURCE_ATTRIBUTES=service.name=Omniscient.Cleaner
-    volumes:
-      - ./.enron-files:/app/.enron-files
-    command: ["dotnet", "Omniscient.Cleaner.dll", "--init", "--path=/app/.enron-files/maildir" ]    
+      - SERVICE_INSTANCE_ID={{.Service.Name}}.{{.Task.Slot}}.{{.Task.ID}}
+      - WAIT_HOSTS=rabbitmq:5672,postgres_db:5432
     networks:
       - omniscient
-  
-  indexer-service:
-    build:
-      context: .
-      dockerfile: Omniscient.Indexer/Dockerfile
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      postgres_db:
-        condition: service_healthy
     deploy:
       restart_policy:
         condition: on-failure
-    ports:
-      - "8081:8081"
+    volumes:
+      - ./.enron-files:/app/.enron-files
+    command: ["dotnet", "Omniscient.Cleaner.dll", "--init", "--path=/app/.enron-files/maildir" ]
+  
+  indexer-service:
+    image: omniscient-indexer-service
+    expose:
+      - "8081"
     environment:
       - ASPNETCORE_HTTP_PORTS=8081
       - RABBITMQ_HOST=rabbitmq
       - POSTGRES_CONNECTION_STRING=HOST=postgres_db;PORT=5432;DB=Omniscient;UID=root;PWD=password;
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Indexer
+      - SERVICE_INSTANCE_ID={{.Service.Name}}.{{.Task.Slot}}.{{.Task.ID}}
+      - WAIT_HOSTS=rabbitmq:5672,postgres_db:5432
     networks:
       - omniscient
+    deploy:
+      restart_policy:
+        condition: on-failure
+      mode: replicated 
+      replicas: 1 # TODO: Increase replicas to 3
   
   blazor-ui:
-    build:
-      context: .
-      dockerfile: Omniscient.Web/Dockerfile
+    image: omniscient-blazor-ui
     depends_on:
       - indexer-service
     ports:
       - "8080:8080"
+    networks:
+      - omniscient
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Web
-      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
       - INDEXER_BASE_ADDRESS=http://indexer-service:8081/
+      - SERVICE_INSTANCE_ID={{.Service.Name}}.{{.Task.Slot}}.{{.Task.ID}}
+  
+  dotnet-aspire:
+    image:  mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    ports:
+      - "18888:18888"
+    expose:
+      - "18889"
     networks:
       - omniscient
-        
-  dotnet-aspire:
-   image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
-   ports:
-     - "18888:18888"
-   expose:
-     - "18889"
-   networks:
-     - omniscient
-        
+      
 volumes:
   omniscient:
-    
+
 networks:
   omniscient:

@@ -2,12 +2,13 @@
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
+
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Omniscient.Web/Omniscient.Web.csproj", "Omniscient.Web/"]
+COPY ["Omniscient.ServiceDefaults/Omniscient.ServiceDefaults.csproj", "Omniscient.ServiceDefaults/"]
 RUN dotnet restore "Omniscient.Web/Omniscient.Web.csproj"
 COPY . .
 WORKDIR "/src/Omniscient.Web"
