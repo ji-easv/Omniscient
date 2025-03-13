@@ -7,45 +7,76 @@ using Serilog;
 
 namespace Omniscient.RabbitMQClient.Implementations;
 
-public class RabbitMqConsumer(
-    IBus bus,
-    IServiceProvider serviceProvider
-)
-    : BackgroundService, IAsyncConsumer
+public class RabbitMqConsumer : BackgroundService, IAsyncConsumer
 {
     private readonly Dictionary<string, IDisposable> _subscriptions = new();
+    private readonly RabbitMqConnection _connection;
+    private readonly IServiceProvider _serviceProvider;
     
+    private readonly List<(Type HandlerType, Type MessageType, string Subscription)> _handlerRegistrations = new();
+    private bool _handlersDiscovered;
+
+    public RabbitMqConsumer(RabbitMqConnection connection,
+        IServiceProvider serviceProvider)
+    {
+        _connection = connection;
+        _serviceProvider = serviceProvider;
+        _connection.ConnectionStateChanged += OnConnectionStateChanged;
+    }
+
     private void DiscoverAndRegisterHandlers()
     {
-        var handlerTypes = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(x => x.GetTypes())
-            .Where(t => t.GetInterfaces().Any(i =>
-                i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRabbitMqMessageHandler<>)))
-            .ToList();
-
-        foreach (var handlerType in handlerTypes)
+        // Only discover handlers once
+        if (!_handlersDiscovered)
         {
-            var messageType = handlerType.GetInterfaces()
-                .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRabbitMqMessageHandler<>))
-                .GetGenericArguments()[0];
-            Log.Information("Found handler {HandlerTypeName} for message type {MessageTypeName}", handlerType.Name,
-                messageType.Name);
+            // Discover handlers and store in _handlerRegistrations
+            var handlerTypes = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(x => x.GetTypes())
+                .Where(t => t.GetInterfaces().Any(i =>
+                    i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRabbitMqMessageHandler<>)))
+                .ToList();
 
-            var handlerInstance = ActivatorUtilities.CreateInstance(serviceProvider, handlerType);
+            foreach (var handlerType in handlerTypes)
+            {
+                var messageType = handlerType.GetInterfaces()
+                    .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRabbitMqMessageHandler<>))
+                    .GetGenericArguments()[0];
+                    
+                _handlerRegistrations.Add((handlerType, messageType, messageType.Name));
+                Log.Information("Found handler {HandlerTypeName} for message type {MessageTypeName}", 
+                    handlerType.Name, messageType.Name);
+            }
+            
+            _handlersDiscovered = true;
+        }
+
+        // Establish subscriptions for all discovered handlers
+        EstablishSubscriptions();
+    }
+    
+    private void EstablishSubscriptions()
+    {
+        foreach (var registration in _handlerRegistrations)
+        {
+            // Skip if subscription already exists
+            if (_subscriptions.ContainsKey(registration.Subscription))
+                continue;
+                
+            var handlerInstance = ActivatorUtilities.CreateInstance(_serviceProvider, registration.HandlerType);
             if (handlerInstance == null)
             {
-                Log.Information("Could not create instance of handler {HandlerTypeName}", handlerType.Name);
+                Log.Information("Could not create instance of handler {HandlerTypeName}", registration.HandlerType.Name);
                 continue;
             }
 
-            var methodInfo = handlerType.GetMethod("HandleMessageAsync");
+            var methodInfo = registration.HandlerType.GetMethod("HandleMessageAsync");
             if (methodInfo == null)
             {
-                Log.Information("Could not create instance of handler {HandlerTypeName}", handlerType.Name);
+                Log.Information("Method HandleMessageAsync not found on handler {HandlerTypeName}", 
+                    registration.HandlerType.Name);
                 continue;
             }
 
-            // Create a typed delegate for the handler method
             Action<object> typedAction = msg =>
             {
                 if (msg is not RabbitMqMessage rabbitMqMessage) return;
@@ -54,9 +85,9 @@ public class RabbitMqConsumer(
             };
 
             var subscribeAsyncMethod = typeof(RabbitMqConsumer).GetMethod(nameof(SubscribeAsync))
-                .MakeGenericMethod(messageType);
+                .MakeGenericMethod(registration.MessageType);
 
-            subscribeAsyncMethod.Invoke(this, [messageType.Name, typedAction, CancellationToken.None]);
+            subscribeAsyncMethod.Invoke(this, [registration.Subscription, typedAction, CancellationToken.None]);
         }
     }
 
@@ -68,8 +99,7 @@ public class RabbitMqConsumer(
             throw new ArgumentException("Subscription already exists");
         }
 
-
-        var subscriptionHandle = await bus.PubSub.SubscribeAsync<T>(
+        var subscriptionHandle = await _connection.GetBus().PubSub.SubscribeAsync<T>(
             subscription,
             msg =>
             {
@@ -105,5 +135,21 @@ public class RabbitMqConsumer(
     {
         DiscoverAndRegisterHandlers();
         return Task.CompletedTask;
+    }
+    
+    private void OnConnectionStateChanged(object? sender, bool isConnected)
+    {
+        if (isConnected)
+        {
+            EstablishSubscriptions();
+        }
+        else
+        {
+            foreach (var subscription in _subscriptions)
+            {
+                subscription.Value.Dispose();
+            }
+            _subscriptions.Clear();
+        }
     }
 }

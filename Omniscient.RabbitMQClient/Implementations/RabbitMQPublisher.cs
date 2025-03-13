@@ -94,7 +94,7 @@ public class RabbitMqPublisher : IAsyncPublisher
 
     private void OnConnectionStateChanged(object? sender, bool isConnected)
     {
-        if (isConnected && _pendingMessages.Any())
+        if (isConnected && !_pendingMessages.IsEmpty)
         {
             _logger.LogInformation("Connection restored. Scheduling retry for {Count} pending messages",
                 _pendingMessages.Count);
