@@ -10,8 +10,8 @@ namespace Omniscient.RabbitMQClient.Implementations;
 public class RabbitMqConsumer(IBus bus, IServiceProvider serviceProvider) : BackgroundService, IAsyncConsumer
 {
     private readonly Dictionary<string, IDisposable> _subscriptions = new();
-    
-    private void DiscoverAndRegisterHandlers()
+
+    private async Task DiscoverAndRegisterHandlers()
     {
         var handlerTypes = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(x => x.GetTypes())
@@ -24,30 +24,36 @@ public class RabbitMqConsumer(IBus bus, IServiceProvider serviceProvider) : Back
             var messageType = handlerType.GetInterfaces()
                 .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRabbitMqMessageHandler<>))
                 .GetGenericArguments()[0];
-            Log.Information("Found handler {HandlerTypeName} for message type {MessageTypeName}", handlerType.Name, messageType.Name);
-            
+            Log.Information("Found handler {HandlerTypeName} for message type {MessageTypeName}", handlerType.Name,
+                messageType.Name);
+
             var handlerInstance = ActivatorUtilities.CreateInstance(serviceProvider, handlerType);
             if (handlerInstance == null)
             {
                 Log.Information("Could not create instance of handler {HandlerTypeName}", handlerType.Name);
                 continue;
             }
-            
+
             var methodInfo = handlerType.GetMethod("HandleMessageAsync");
             if (methodInfo == null)
             {
                 Log.Information("Could not create instance of handler {HandlerTypeName}", handlerType.Name);
                 continue;
             }
-            
+
             // Create a typed delegate for the handler method
             Action<object> typedAction = msg =>
             {
                 if (msg is not RabbitMqMessage rabbitMqMessage) return;
                 rabbitMqMessage.ExtractPropagatedContext();
-                methodInfo.Invoke(handlerInstance, [rabbitMqMessage, CancellationToken.None]);
+
+                // This is the key change: invoke the async method and wait for it synchronously
+                var task = (Task)methodInfo.Invoke(handlerInstance, [rabbitMqMessage, CancellationToken.None]);
+
+                // Block until the task completes - this ensures sequential processing
+                task.GetAwaiter().GetResult();
             };
-            
+
             var subscribeAsyncMethod = typeof(RabbitMqConsumer).GetMethod(nameof(SubscribeAsync))
                 .MakeGenericMethod(messageType);
 
@@ -55,12 +61,14 @@ public class RabbitMqConsumer(IBus bus, IServiceProvider serviceProvider) : Back
         }
     }
 
-    public async Task SubscribeAsync<T>(string subscription, Action<T> handler, CancellationToken cancellationToken = default)
+    public async Task SubscribeAsync<T>(string subscription, Action<T> handler,
+        CancellationToken cancellationToken = default)
     {
-        if(_subscriptions.ContainsKey(subscription))
+        if (_subscriptions.ContainsKey(subscription))
         {
             throw new ArgumentException("Subscription already exists");
         }
+
         var subscriptionHandle = await bus.PubSub.SubscribeAsync<T>(
             subscription,
             handler,
@@ -71,7 +79,7 @@ public class RabbitMqConsumer(IBus bus, IServiceProvider serviceProvider) : Back
 
     public Task UnsubscribeAsync(string subscription, CancellationToken cancellationToken = default)
     {
-        if(!_subscriptions.TryGetValue(subscription, out IDisposable? subscriptionHandle))
+        if (!_subscriptions.TryGetValue(subscription, out IDisposable? subscriptionHandle))
         {
             throw new ArgumentException("Subscription does not exist");
         }
@@ -83,6 +91,6 @@ public class RabbitMqConsumer(IBus bus, IServiceProvider serviceProvider) : Back
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        DiscoverAndRegisterHandlers();
+        await DiscoverAndRegisterHandlers();
     }
 }

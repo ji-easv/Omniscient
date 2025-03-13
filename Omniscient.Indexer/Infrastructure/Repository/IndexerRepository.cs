@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Omniscient.ServiceDefaults;
 using Omniscient.Shared;
 using Omniscient.Shared.Entities;
@@ -65,15 +66,18 @@ public class IndexerRepository(AppDbContext context) : IIndexerRepository
     {
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
         await context.Occurrences.AddRangeAsync(occurrences);
-        await context.SaveChangesAsync();
     }
 
-    public async Task<Email> AddEmailAsync(Email email)
+    public async Task AddEmailsAsync(List<Email> emails)
     {
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
-        var result =  await context.Emails.AddAsync(email);
-        await context.SaveChangesAsync();
-        return result.Entity;
+        await context.Emails.AddRangeAsync(emails);
+    }
+    
+    public async Task AddEmailAsync(List<Email> emails)
+    {
+        using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
+        await context.Emails.AddRangeAsync(emails);
     }
 
     public async Task<Email?> GetEmailByFileName(string fileName)
@@ -81,17 +85,29 @@ public class IndexerRepository(AppDbContext context) : IIndexerRepository
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
         return await context.Emails.FirstOrDefaultAsync(e => e.FileName == fileName);
     }
+    
+    public async Task<List<Email>> GetAllEmails()
+    {
+        using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
+        return await context.Emails.ToListAsync();
+    }
 
     public async Task UpsertWordsAsync(List<string> wordValues)
     {
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
-        
-        // Execute raw SQL using ON CONFLICT DO NOTHING to avoid duplicate key errors due to race conditions
-        foreach (var value in wordValues)
-        {
-            await context.Database.ExecuteSqlRawAsync(
-                "INSERT INTO \"Words\" (\"Value\") VALUES ({0}) ON CONFLICT (\"Value\") DO NOTHING",
-                value);
-        }
+    
+        if (!wordValues.Any())
+            return;
+    
+        // Build a single SQL statement with multiple values
+        var valuesList = string.Join(", ", wordValues.Distinct().Select((w, i) => $"(@p{i})"));
+        var sql = $"INSERT INTO \"Words\" (\"Value\") VALUES {valuesList} ON CONFLICT (\"Value\") DO NOTHING";
+    
+        var parameters = wordValues.Distinct()
+            .Select((word, index) => new NpgsqlParameter($"@p{index}", word))
+            .ToArray();
+    
+        await context.Database.ExecuteSqlRawAsync(sql, parameters);
     }
+
 }
