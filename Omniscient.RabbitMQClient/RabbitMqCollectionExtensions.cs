@@ -11,7 +11,7 @@ public static class RabbitMqCollectionExtensions
 {
     public static WebApplicationBuilder AddRabbitMqDependencies(this WebApplicationBuilder builder)
     {
-        // var host = EnvironmentHelper
+        var host = EnvironmentHelper.GetValue("RABBITMQ_HOST", builder.Configuration);
 
         builder.Services.AddEasyNetQ(config =>
             {
