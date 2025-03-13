@@ -116,6 +116,12 @@ public static class Extensions
         var endpoint = EnvironmentHelper.GetValue("OTEL_EXPORTER_OTLP_ENDPOINT", builder.Configuration);
         
         builder.Services.AddOpenTelemetry()
+            .WithTracing(tracing =>
+            {
+                tracing.AddAspNetCoreInstrumentation();
+                tracing.AddHttpClientInstrumentation();
+                tracing.SetSampler(new AlwaysOnSampler());
+            })
             .UseOtlpExporter(OtlpExportProtocol.Grpc, new Uri(endpoint));
 
         // Uncomment the following lines to enable the Azure Monitor exporter (requires the Azure.Monitor.OpenTelemetry.AspNetCore package)
