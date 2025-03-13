@@ -4,5 +4,5 @@ namespace Omniscient.RabbitMQClient.Messages;
 
 public class EmailMessage : RabbitMqMessage
 {
-    public Email Email { get; set; }
+    public List<Email> Emails { get; set; }
 }

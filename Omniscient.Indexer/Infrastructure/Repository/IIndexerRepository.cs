@@ -7,7 +7,8 @@ public interface IIndexerRepository
 {
     Task<Email?> GetEmailByIdAsync(Guid emailId);
     Task<Email?> GetEmailByFileName(string fileName);
-    Task<Email> AddEmailAsync(Email email);
+    Task AddEmailsAsync(List<Email> email);
+    Task<List<Email>> GetAllEmails();
     Task DeleteEmailAsync(Email email);
     
     Task<PaginatedList<Email>> SearchEmailsAsync(string[] queryTerms, int pageIndex, int pageSize);
