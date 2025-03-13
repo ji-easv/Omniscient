@@ -10,7 +10,8 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddHttpClient<IndexerClient>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5088/");
+    var baseAddress = EnvironmentHelper.GetValue("INDEXER_BASE_ADDRESS", builder.Configuration);
+    client.BaseAddress = new Uri(baseAddress);
 });
 
 builder.AddServiceDefaults();

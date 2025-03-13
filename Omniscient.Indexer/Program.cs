@@ -9,7 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    var connectionString = EnvironmentHelper.GetValue("POSTGRES_CONNECTION_STRING", builder.Configuration, "DefaultConnection");
+    options.UseNpgsql(connectionString);
 });
 
 // Add services to the container.
@@ -23,9 +24,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.AddServiceDefaults();
-builder.Services.AddRabbitMqDependencies();
+builder.AddRabbitMqDependencies();
 
 var app = builder.Build();
+
+
 
 // Apply any pending migrations on startup
 using (var scope = app.Services.CreateScope())
