@@ -19,9 +19,9 @@ ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "Omniscient.Indexer.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
-RUN apt-get update && apt-get install -y netcat-openbsd
+RUN apt-get update && apt-get install -y netcat-openbsd dos2unix
 COPY wait-for-rmq-postgres.sh /app/wait-for-rmq-postgres.sh
-RUN chmod +x /app/wait-for-rmq-postgres.sh
+RUN chmod +x /app/wait-for-rmq-postgres.sh && dos2unix wait-for-rmq-postgres.sh
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["/app/wait-for-rmq-postgres.sh"]
