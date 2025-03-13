@@ -47,7 +47,7 @@ public class FileSystemRepository : IFileSystemRepository
         _allFilesCount = allFiles.Length;
         _path = path;
 
-        foreach (var file in allFiles)
+        foreach (var file in allFiles.Take(20))
         {
             await _semaphore.WaitAsync();
             tasks.Add(ProcessSingleFile(file));

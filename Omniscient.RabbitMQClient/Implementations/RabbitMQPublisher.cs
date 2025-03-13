@@ -4,6 +4,7 @@ using Omniscient.RabbitMQClient.Interfaces;
 using Omniscient.RabbitMQClient.Messages;
 using Omniscient.ServiceDefaults;
 using Polly.CircuitBreaker;
+using RabbitMQ.Client.Exceptions;
 using Serilog;
 
 namespace Omniscient.RabbitMQClient.Implementations;

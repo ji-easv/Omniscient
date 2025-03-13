@@ -1,6 +1,7 @@
 ﻿@using Omniscient.Shared
 @using Omniscient.Shared.Dtos
 @using Omniscient.Web.Clients
+@using Polly.CircuitBreaker
 
 @page "/"
 @rendermode InteractiveServer
@@ -10,6 +11,13 @@
 <PageTitle>Omniscient</PageTitle>
 
 <div class="container">
+    @if (CircuitIsOpen)
+    {
+        <div class="alert alert-warning">
+            The service is temporarily unavailable. Please try again later.
+        </div>
+    }
+    
     <h1>Search</h1>
     <SearchBar OnSearch="HandleSearch"/>
 
@@ -40,11 +48,8 @@
     private string? _selectedEmailContent;
     private EmailDto? _selectedEmailDto;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await Search(_query);
-    }
-
+    private bool CircuitIsOpen => IndexerClient.CircuitState == CircuitState.Open;
+    
     private async Task HandleSearch(string query)
     {
         await Search(query);

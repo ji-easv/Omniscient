@@ -18,4 +18,8 @@
       <ProjectReference Include="..\Omniscient.Shared\Omniscient.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Polly" Version="8.5.2" />
+    </ItemGroup>
+
 </Project>
