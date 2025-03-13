@@ -99,7 +99,7 @@ public class RabbitMqConsumer : BackgroundService, IAsyncConsumer
             throw new ArgumentException("Subscription already exists");
         }
 
-        var subscriptionHandle = await _connection.GetBus().PubSub.SubscribeAsync<T>(
+        var subscriptionHandle = await _connection.Bus.PubSub.SubscribeAsync<T>(
             subscription,
             msg =>
             {

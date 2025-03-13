@@ -37,7 +37,7 @@ public class RabbitMqPublisher : IAsyncPublisher
         {
             if (_connection.IsConnected)
             {
-                await _connection.GetBus().PubSub.PublishAsync(message, token);
+                await _connection.Bus.PubSub.PublishAsync(message, token);
                 return;
             }
         }
@@ -69,7 +69,7 @@ public class RabbitMqPublisher : IAsyncPublisher
         {
             try
             {
-                await _connection.GetBus().PubSub.PublishAsync(message, CancellationToken.None);
+                await _connection.Bus.PubSub.PublishAsync(message, CancellationToken.None);
                 processedCount++;
             }
             catch (Exception ex)

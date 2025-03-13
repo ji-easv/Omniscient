@@ -1,58 +1,69 @@
 ﻿using EasyNetQ;
 using Microsoft.Extensions.Logging;
+using Omniscient.ServiceDefaults;
 
 namespace Omniscient.RabbitMQClient;
 
 public class RabbitMqConnection : IDisposable
 {
-    private readonly IBus _bus;
     private readonly ILogger<RabbitMqConnection> _logger;
+    private readonly CircuitBreaker _circuitBreaker;
     private readonly Timer _reconnectTimer;
-    private readonly object _stateLock = new();
-    
-    // Circuit breaker settings
-    private readonly int _failureThreshold = 3;
-    private readonly TimeSpan _circuitResetTimeout = TimeSpan.FromSeconds(30);
-    private CircuitState _circuitState = CircuitState.Closed;
-    private int _failureCount;
-    private DateTime _circuitOpenedTime;
+    private bool _reconnectPending;
 
     public event EventHandler<bool> ConnectionStateChanged;
     public bool IsConnected { get; private set; }
-
-    private enum CircuitState
-    {
-        Closed,     // Normal operation, connections allowed
-        Open,       // Circuit breaker tripped, no connection attempts
-        HalfOpen    // Testing if connection can be restored
-    }
+    public IBus Bus { get; }
 
     public RabbitMqConnection(IBus bus, ILogger<RabbitMqConnection> logger)
     {
-        _bus = bus;
+        Bus = bus;
         _logger = logger;
-        _reconnectTimer = new Timer(TryReconnect, null, Timeout.Infinite, Timeout.Infinite);
+        _reconnectTimer = new Timer(ReconnectTimerCallback, null, Timeout.Infinite, Timeout.Infinite);
 
-        _bus.Advanced.Connected += (sender, args) => {
+        _circuitBreaker = new CircuitBreaker();
+        _circuitBreaker.OnHalfOpen += (_, _) => TryReconnect();
+        _circuitBreaker.OnOpen += (_, _) => SetConnectedState(false);
+        _circuitBreaker.OnClosed += (_, _) => SetConnectedState(true);
+
+        Bus.Advanced.Connected += (sender, args) =>
+        {
             SetConnectedState(true);
-            ResetCircuitBreaker();
+            _circuitBreaker.ResetCircuitBreaker();
             _logger.LogInformation("RabbitMQ connection established");
         };
 
-        _bus.Advanced.Disconnected += (sender, args) => {
+        Bus.Advanced.Disconnected += (sender, args) =>
+        {
             SetConnectedState(false);
             _logger.LogWarning("RabbitMQ disconnected");
-            ScheduleReconnection();
+            TryReconnect();
         };
 
         // Check initial connection state
-        if (_bus.Advanced.IsConnected)
+        if (Bus.Advanced.IsConnected)
             SetConnectedState(true);
         else
         {
             SetConnectedState(false);
-            ScheduleReconnection(TimeSpan.FromSeconds(1));
+            ScheduleReconnect(TimeSpan.FromSeconds(1));
         }
+    }
+
+    private void ScheduleReconnect(TimeSpan delay)
+    {
+        if (_reconnectPending)
+            return;
+
+        _reconnectPending = true;
+        _logger.LogInformation("Scheduling reconnection attempt in {Delay} seconds", delay.TotalSeconds);
+        _reconnectTimer.Change(delay, Timeout.InfiniteTimeSpan);
+    }
+
+    private void ReconnectTimerCallback(object state)
+    {
+        _reconnectPending = false;
+        TryReconnect();
     }
 
     public void SetConnectedState(bool connected)
@@ -64,131 +75,40 @@ public class RabbitMqConnection : IDisposable
         }
     }
 
-    private void ScheduleReconnection(TimeSpan? delay = null)
+    private async void TryReconnect()
     {
-        lock (_stateLock)
-        {
-            switch (_circuitState)
-            {
-                case CircuitState.Closed:
-                    _reconnectTimer.Change(delay ?? TimeSpan.FromSeconds(5), Timeout.InfiniteTimeSpan);
-                    break;
-                case CircuitState.HalfOpen:
-                    _reconnectTimer.Change(delay ?? TimeSpan.FromSeconds(2), Timeout.InfiniteTimeSpan);
-                    break;
-                case CircuitState.Open:
-                    // When circuit is open, only schedule after timeout period
-                    var timeInOpen = DateTime.UtcNow - _circuitOpenedTime;
-                    if (timeInOpen >= _circuitResetTimeout)
-                    {
-                        _circuitState = CircuitState.HalfOpen;
-                        _logger.LogInformation("Circuit breaker state changed to Half-Open");
-                        _reconnectTimer.Change(TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
-                    }
-                    else
-                    {
-                        var remainingTime = _circuitResetTimeout - timeInOpen;
-                        _reconnectTimer.Change(remainingTime, Timeout.InfiniteTimeSpan);
-                    }
-                    break;
-            }
-        }
-    }
-
-    private void TripCircuitBreaker()
-    {
-        lock (_stateLock)
-        {
-            _circuitState = CircuitState.Open;
-            _circuitOpenedTime = DateTime.UtcNow;
-            _logger.LogWarning("Circuit breaker tripped open. Stopping reconnection attempts for {Timeout} seconds", 
-                _circuitResetTimeout.TotalSeconds);
-            ScheduleReconnection(_circuitResetTimeout);
-        }
-    }
-
-    private void ResetCircuitBreaker()
-    {
-        lock (_stateLock)
-        {
-            _circuitState = CircuitState.Closed;
-            _failureCount = 0;
-            _logger.LogInformation("Circuit breaker reset to closed state");
-        }
-    }
-
-    private async void TryReconnect(object? state)
-    {
-        lock (_stateLock)
-        {
-            if (IsConnected) return;
-            
-            if (_circuitState == CircuitState.Open)
-            {
-                ScheduleReconnection();
-                return;
-            }
-        }
+        if (IsConnected) return;
 
         try
         {
-            _logger.LogInformation("Attempting to reconnect to RabbitMQ... (Circuit state: {State})", _circuitState);
-
-            if (!_bus.Advanced.IsConnected)
+            await _circuitBreaker.ExecuteAsync(async () =>
             {
-                try
-                {
-                    await _bus.Advanced.ExchangeDeclareAsync("health.check.exchange", "direct", false, true);
-                    SetConnectedState(true);
-                    ResetCircuitBreaker();
-                }
-                catch (Exception ex)
-                {
-                    lock (_stateLock)
-                    {
-                        _failureCount++;
-                        _logger.LogWarning(ex, "Failed to reconnect to RabbitMQ (Attempt {Count}/{Threshold})", 
-                            _failureCount, _failureThreshold);
-                        
-                        if (_failureCount >= _failureThreshold && _circuitState != CircuitState.Open)
-                        {
-                            TripCircuitBreaker();
-                        }
-                        else
-                        {
-                            ScheduleReconnection();
-                        }
-                    }
-                }
-            }
-            else
-            {
-                SetConnectedState(true);
-                ResetCircuitBreaker();
-            }
+                await Bus.Advanced.ExchangeDeclareAsync("health.check.exchange", "direct", false, true);
+            });
+        }
+        catch (CircuitBreakerOpenException)
+        {
+            _logger.LogWarning("Circuit breaker is open, skipping reconnection attempt");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error during reconnection attempt");
-            lock (_stateLock)
+            _logger.LogError(ex, "Failed to connect to RabbitMQ");
+
+            // Schedule another reconnection attempt based on circuit state
+            TimeSpan delay = _circuitBreaker.State switch
             {
-                _failureCount++;
-                if (_failureCount >= _failureThreshold && _circuitState != CircuitState.Open)
-                {
-                    TripCircuitBreaker();
-                }
-                else
-                {
-                    ScheduleReconnection();
-                }
-            }
+                CircuitState.Closed => TimeSpan.FromSeconds(5),
+                CircuitState.HalfOpen => TimeSpan.FromSeconds(2),
+                _ => TimeSpan.FromSeconds(30)
+            };
+
+            ScheduleReconnect(delay);
         }
     }
-
-    public IBus GetBus() => _bus;
 
     public void Dispose()
     {
         _reconnectTimer?.Dispose();
+        _circuitBreaker?.Dispose();
     }
 }

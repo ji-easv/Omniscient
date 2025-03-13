@@ -11,15 +11,13 @@
 <PageTitle>Omniscient</PageTitle>
 
 <div class="container">
-    @if (CircuitIsOpen)
-    {
-        <div class="alert alert-warning">
-            The service is temporarily unavailable. Please try again later.
-        </div>
-    }
-    
     <h1>Search</h1>
     <SearchBar OnSearch="HandleSearch"/>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <p class="text-danger">@_errorMessage</p>
+    }
 
     @if (_selectedEmailDto is not null)
     {
@@ -47,9 +45,8 @@
 
     private string? _selectedEmailContent;
     private EmailDto? _selectedEmailDto;
+    private string? _errorMessage;
 
-    private bool CircuitIsOpen => IndexerClient.CircuitState == CircuitState.Open;
-    
     private async Task HandleSearch(string query)
     {
         await Search(query);
@@ -57,11 +54,23 @@
 
     private async Task Search(string query, int pageIndex = 1, int pageSize = 10)
     {
-        OnBackPressed();
-        _isSearching = true;
-        _query = query;
-        _emails = await IndexerClient.SearchEmailsAsync(_query, pageIndex, pageSize);
-        _isSearching = false;
+        _errorMessage = null;
+
+        try
+        {
+            OnBackPressed();
+            _isSearching = true;
+            _query = query;
+            _emails = await IndexerClient.SearchEmailsAsync(_query, pageIndex, pageSize);
+        }
+        catch (Exception e)
+        {
+            _errorMessage = "Unable to search emails. Please try again later.";
+        }
+        finally
+        {
+            _isSearching = false;
+        }
     }
 
     private async Task ChangePageIndex(int pageIndex)
@@ -80,4 +89,5 @@
         _selectedEmailDto = null;
         _selectedEmailContent = null;
     }
+
 }
