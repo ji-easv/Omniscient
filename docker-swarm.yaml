@@ -28,12 +28,23 @@
       - POSTGRES_USER=root
     networks:
       - omniscient
-  
+  jeger:
+    image: jaegertracing/jaeger:latest
+    container_name: jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4317:4317"    # OpenTelemetry (OTLP) gRPC
+      - "4318:4318"    # OpenTelemetry (OTLP) HTTP
+    networks:
+      - omniscient
+
   cleaner-service:
     image: omniscient-cleaner-service
     environment:
       - RABBITMQ_HOST=rabbitmq
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_RESOURCE_ATTRIBUTES=service.name=Omniscient.Cleaner
       - SERVICE_INSTANCE_ID={{.Service.Name}}.{{.Task.Slot}}.{{.Task.ID}}
       - WAIT_HOSTS=rabbitmq:5672,postgres_db:5432
@@ -54,7 +65,7 @@
       - ASPNETCORE_HTTP_PORTS=8081
       - RABBITMQ_HOST=rabbitmq
       - POSTGRES_CONNECTION_STRING=HOST=postgres_db;PORT=5432;DB=Omniscient;UID=root;PWD=password;
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_SERVICE_NAME=Omniscient.Indexer
       - SERVICE_INSTANCE_ID={{.Service.Name}}.{{.Task.Slot}}.{{.Task.ID}}
       - WAIT_HOSTS=rabbitmq:5672,postgres_db:5432
@@ -75,7 +86,7 @@
     networks:
       - omniscient
     environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_SERVICE_NAME=Omniscient.Web
       - INDEXER_BASE_ADDRESS=http://indexer-service:8081/
       - SERVICE_INSTANCE_ID={{.Service.Name}}.{{.Task.Slot}}.{{.Task.ID}}
