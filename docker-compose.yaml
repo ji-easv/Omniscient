@@ -44,7 +44,7 @@
       - OTEL_RESOURCE_ATTRIBUTES=service.name=Omniscient.Cleaner
     volumes:
       - ./.enron-files:/app/.enron-files
-    command: [ "--init", "--path=/app/.enron-files/maildir" ]
+    command: ["dotnet", "Omniscient.Cleaner.dll", "--init", "--path=/app/.enron-files/maildir" ]    
     networks:
       - omniscient
   
