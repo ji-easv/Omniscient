@@ -11,6 +11,8 @@ namespace Omniscient.Indexer.Domain.Services;
 
 public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndexerService> logger, AppDbContext context) : IIndexerService
 {
+   private readonly char[] _splitChars = [' ', '\n', '\r', '\t', '.', ',', '!', '?', ';', ':', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', '`', '~', '@', '#', '$', '%', '^', '&', '*', '-', '_', '+', '=', '"'];
+
     public async Task<EmailDto> GetEmailAsync(Guid emailId)
     {
         var email = await indexerRepository.GetEmailByIdAsync(emailId);
@@ -44,9 +46,8 @@ public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndex
             emailsToSave.Add(email);
 
             // Split the email content into words
-            var splitChars = new[] { ' ', '\n', '\r', '\t', '.', ',', '!', '?', ';', ':', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', '`', '~', '@', '#', '$', '%', '^', '&', '*', '-', '_', '+', '=', '"' };
             var wordDictionary = email.Content
-                .Split(splitChars, StringSplitOptions.RemoveEmptyEntries)
+                .Split(_splitChars, StringSplitOptions.RemoveEmptyEntries)
                 .Select(w => w.ToLower())
                 .GroupBy(w => w)
                 .ToDictionary(g => g.Key, g => g.Count());
