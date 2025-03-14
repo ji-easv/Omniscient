@@ -19,9 +19,9 @@ public static class RabbitMqCollectionExtensions
                 config.PersistentMessages = true;
                 config.ConnectIntervalAttempt = TimeSpan.FromSeconds(5);
                 config.RequestedHeartbeat = TimeSpan.FromSeconds(10);
+                config.PrefetchCount = 1;
             })
             .UseSystemTextJson();
-        
         builder.Services.AddSingleton<RabbitMqConnection>();
         builder.Services.AddHostedService<RabbitMqConsumer>();
         builder.Services.AddSingleton<IAsyncPublisher, RabbitMqPublisher>();

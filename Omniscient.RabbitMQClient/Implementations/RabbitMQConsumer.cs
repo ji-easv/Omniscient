@@ -10,6 +10,7 @@ namespace Omniscient.RabbitMQClient.Implementations;
 public class RabbitMqConsumer : BackgroundService, IAsyncConsumer
 {
     private readonly Dictionary<string, IDisposable> _subscriptions = new();
+
     private readonly RabbitMqConnection _connection;
     private readonly IServiceProvider _serviceProvider;
     
@@ -24,7 +25,7 @@ public class RabbitMqConsumer : BackgroundService, IAsyncConsumer
         _connection.ConnectionStateChanged += OnConnectionStateChanged;
     }
 
-    private void DiscoverAndRegisterHandlers()
+    private async Task DiscoverAndRegisterHandlers()
     {
         // Only discover handlers once
         if (!_handlersDiscovered)
@@ -35,7 +36,7 @@ public class RabbitMqConsumer : BackgroundService, IAsyncConsumer
                 .Where(t => t.GetInterfaces().Any(i =>
                     i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRabbitMqMessageHandler<>)))
                 .ToList();
-
+            
             foreach (var handlerType in handlerTypes)
             {
                 var messageType = handlerType.GetInterfaces()
@@ -81,7 +82,12 @@ public class RabbitMqConsumer : BackgroundService, IAsyncConsumer
             {
                 if (msg is not RabbitMqMessage rabbitMqMessage) return;
                 rabbitMqMessage.ExtractPropagatedContext();
-                methodInfo.Invoke(handlerInstance, [rabbitMqMessage, CancellationToken.None]);
+
+                // This is the key change: invoke the async method and wait for it synchronously
+                var task = (Task)methodInfo.Invoke(handlerInstance, [rabbitMqMessage, CancellationToken.None]);
+
+                // Block until the task completes - this ensures sequential processing
+                task.GetAwaiter().GetResult();
             };
 
             var subscribeAsyncMethod = typeof(RabbitMqConsumer).GetMethod(nameof(SubscribeAsync))
@@ -131,10 +137,9 @@ public class RabbitMqConsumer : BackgroundService, IAsyncConsumer
         return Task.CompletedTask;
     }
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        DiscoverAndRegisterHandlers();
-        return Task.CompletedTask;
+        await DiscoverAndRegisterHandlers();
     }
     
     private void OnConnectionStateChanged(object? sender, bool isConnected)

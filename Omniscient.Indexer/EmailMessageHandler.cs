@@ -16,6 +16,6 @@ public class EmailMessageHandler(IServiceProvider serviceProvider) : IRabbitMqMe
         
         var indexerService = scope.ServiceProvider.GetRequiredService<IIndexerService>();
         Log.Information("Received email message: {@Message}", message);
-        await indexerService.IndexEmail(message.Email);
+        await indexerService.IndexEmails(message.Emails);
     }
 }
