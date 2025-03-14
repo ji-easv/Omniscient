@@ -16,4 +16,9 @@ public class PaginatedList<T>
         TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
         Items = items;
     }
+
+    public static PaginatedList<T> Empty()
+    {
+        return new PaginatedList<T>([], 0, 1, 10);
+    }
 }
