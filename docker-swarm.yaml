@@ -64,7 +64,7 @@
       restart_policy:
         condition: on-failure
       mode: replicated 
-      replicas: 1 # TODO: Increase replicas to 3
+      replicas: 3
   
   blazor-ui:
     image: omniscient-blazor-ui
@@ -89,8 +89,5 @@
     networks:
       - omniscient
       
-volumes:
-  omniscient:
-
 networks:
   omniscient:

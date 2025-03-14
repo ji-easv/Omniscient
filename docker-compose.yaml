@@ -94,9 +94,6 @@
      - "18889"
    networks:
      - omniscient
-        
-volumes:
-  omniscient:
     
 networks:
   omniscient:
