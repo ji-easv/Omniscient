@@ -38,6 +38,7 @@
         User -> BlazorUI "Sends search terms" "HTTPS"
 
         BlazorUI -> IndexerMS "GET emails" "HTTPS"
+        UI -> IndexerClient "Uses"
         IndexerCLient -> IndexerController "GET emails" "HTTPS"
 
         IndexerController -> IndexerService "Uses"
