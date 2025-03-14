@@ -1,4 +1,5 @@
-﻿using Omniscient.ServiceDefaults;
+﻿using Omniscient.Indexer.Infrastructure;
+using Omniscient.ServiceDefaults;
 using Omniscient.Shared;
 using Omniscient.Shared.Dtos;
 using Omniscient.Shared.Entities;
@@ -8,8 +9,10 @@ using IIndexerRepository = Omniscient.Indexer.Infrastructure.Repository.IIndexer
 
 namespace Omniscient.Indexer.Domain.Services;
 
-public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndexerService> logger) : IIndexerService
+public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndexerService> logger, AppDbContext context) : IIndexerService
 {
+   private readonly char[] _splitChars = [' ', '\n', '\r', '\t', '.', ',', '!', '?', ';', ':', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', '`', '~', '@', '#', '$', '%', '^', '&', '*', '-', '_', '+', '=', '"'];
+
     public async Task<EmailDto> GetEmailAsync(Guid emailId)
     {
         var email = await indexerRepository.GetEmailByIdAsync(emailId);
@@ -30,42 +33,47 @@ public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndex
         return emails.MapTo(e => e.ToDto());
     }
 
-    public async Task IndexEmail(Email email)
+    public async Task IndexEmails(List<Email> emails)
     {
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
-        
-        // Add the email to the database
-        var existingEmail = await indexerRepository.GetEmailByFileName(email.FileName);
-        if (existingEmail != null)
-        {
-            logger.LogInformation("Email with file name {EmailFileName} already exists, deleting the existing email", email.FileName);
-            await indexerRepository.DeleteEmailAsync(existingEmail);
-        }
-        await indexerRepository.AddEmailAsync(email);
 
-        // Split the email content into words
-        var splitChars = new[] { ' ', '\n', '\r', '\t', '.', ',', '!', '?', ';', ':', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', '`', '~', '@', '#', '$', '%', '^', '&', '*', '-', '_', '+', '=', '"' };
-        var wordList = email.Content.Split(splitChars, StringSplitOptions.RemoveEmptyEntries).Select(w => w.ToLower()).ToList();
-
-        // Find all unique words in the email and add them to the database
-        var uniqueWordValues = wordList.Distinct().ToList();
-        await indexerRepository.UpsertWordsAsync(uniqueWordValues);
-
-        // For each word, find all occurrences in the email and add them to the database
+        var uniqueWords = new HashSet<string>();
         var occurrences = new List<Occurence>();
-        foreach (var word in uniqueWordValues)
+        var emailsToSave = new List<Email>();
+
+        foreach (var email in emails)
         {
-            var occurrenceCount = wordList.Count(w => w == word);
-            
-            occurrences.Add(new Occurence
+            emailsToSave.Add(email);
+
+            // Split the email content into words
+            var wordDictionary = email.Content
+                .Split(_splitChars, StringSplitOptions.RemoveEmptyEntries)
+                .Select(w => w.ToLower())
+                .GroupBy(w => w)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            // For each word, find all occurrences in the email and add them to the database
+            foreach (var (word, count) in wordDictionary)
             {
-                WordValue = word,
-                EmailId = email.Id,
-                Count = occurrenceCount
-            });
+                uniqueWords.Add(word);
+
+                occurrences.Add(new Occurence
+                {
+                    WordValue = word,
+                    EmailId = email.Id,
+                    Count = count
+                });
+            }
+            //logger.LogInformation("Email with file name {EmailFileName} processed", email.FileName);
         }
         
+        // Find all unique words in the email and add them to the database
+        await indexerRepository.UpsertWordsAsync(uniqueWords.ToList());
         await indexerRepository.AddOccurrencesAsync(occurrences);
+        await indexerRepository.AddEmailsAsync(emailsToSave);
+
+        await context.SaveChangesAsync();
+        GC.Collect();
     }
 
     public async Task<string> GetFullEmailContent(Guid emailId)

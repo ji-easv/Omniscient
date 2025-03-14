@@ -8,6 +8,6 @@ public interface IIndexerService
 {
     Task<EmailDto> GetEmailAsync(Guid emailId);
     Task<PaginatedList<EmailDto>> SearchEmailsAsync(string query, int pageIndex, int pageSize);
-    Task IndexEmail(Email email);
+    Task IndexEmails(List<Email> emails);
     Task<string> GetFullEmailContent(Guid emailId);
 }
