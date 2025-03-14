@@ -64,7 +64,7 @@
       restart_policy:
         condition: on-failure
       mode: replicated 
-      replicas: 3
+      replicas: 2
   
   blazor-ui:
     image: omniscient-blazor-ui
