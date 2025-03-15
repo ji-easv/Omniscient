@@ -123,6 +123,7 @@ public static class Extensions
                 tracing.SetSampler(new AlwaysOnSampler());
             })
             .UseOtlpExporter(OtlpExportProtocol.Grpc, new Uri(endpoint));
+        
 
         // Uncomment the following lines to enable the Azure Monitor exporter (requires the Azure.Monitor.OpenTelemetry.AspNetCore package)
         //if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
@@ -146,6 +147,7 @@ public static class Extensions
 
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
+        
         // Adding health checks endpoints to applications in non-development environments has security implications.
         // See https://aka.ms/dotnet/aspire/healthchecks for details before enabling these endpoints in non-development environments.
         if (app.Environment.IsDevelopment())
@@ -159,6 +161,7 @@ public static class Extensions
                 Predicate = r => r.Tags.Contains("live")
             });
         }
+        
 
         return app;
     }
