@@ -171,6 +171,7 @@ public static class Extensions
             // Enrich log events with additional context information
             .Enrich.FromLogContext()
             .Enrich.WithThreadId()
+            .Enrich.WithMachineName()
             // Write logs to console with a custom output template
             .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss}|{MachineName}|{ThreadId}|{RequestId}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
             .CreateLogger();
