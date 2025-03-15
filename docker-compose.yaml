@@ -12,10 +12,26 @@
     networks:
       - omniscient
   
-  postgres_db:
+  postgres_db_shard1:
     image: postgres:latest
     ports:
       - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-d", "db_prod" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 60s
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=root
+    networks:
+      - omniscient
+
+  postgres_db_shard2:
+    image: postgres:latest
+    ports:
+      - "5433:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready", "-d", "db_prod" ]
       interval: 30s
@@ -35,8 +51,6 @@
     depends_on:
       rabbitmq:
         condition: service_healthy
-      postgres_db:
-        condition: service_healthy
     environment:
       - RABBITMQ_HOST=rabbitmq
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
@@ -47,14 +61,14 @@
     networks:
       - omniscient
   
-  indexer-service:
+  indexer-service-shard1:
     build:
       context: .
       dockerfile: Omniscient.Indexer/Dockerfile
     depends_on:
       rabbitmq:
         condition: service_healthy
-      postgres_db:
+      postgres_db_shard1:
         condition: service_healthy
     deploy:
       restart_policy:
@@ -64,9 +78,36 @@
     environment:
       - ASPNETCORE_HTTP_PORTS=8081
       - RABBITMQ_HOST=rabbitmq
-      - POSTGRES_CONNECTION_STRING=HOST=postgres_db;PORT=5432;DB=Omniscient;UID=root;PWD=password;
+      - POSTGRES_CONNECTION_STRING=HOST=postgres_db_shard1;PORT=5432;DB=Omniscient;UID=root;PWD=password;
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Indexer
+      - SENDER_START=A
+      - SENDER_END=M
+    networks:
+      - omniscient
+
+  indexer-service-shard2:
+    build:
+      context: .
+      dockerfile: Omniscient.Indexer/Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres_db_shard2:
+        condition: service_healthy
+    deploy:
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "8082:8081"
+    environment:
+      - ASPNETCORE_HTTP_PORTS=8081
+      - RABBITMQ_HOST=rabbitmq
+      - POSTGRES_CONNECTION_STRING=HOST=postgres_db_shard2;PORT=5433;DB=Omniscient;UID=root;PWD=password;
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
+      - OTEL_SERVICE_NAME=Omniscient.Indexer
+      - SENDER_START=N
+      - SENDER_END=Z
     networks:
       - omniscient
   
@@ -75,7 +116,8 @@
       context: .
       dockerfile: Omniscient.Web/Dockerfile
     depends_on:
-      - indexer-service
+      - indexer-service-shard1
+      - indexer-service-shard2
     ports:
       - "8080:8080"
     environment:
