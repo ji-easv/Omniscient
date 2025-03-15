@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    var connectionString = EnvironmentHelper.GetValue("POSTGRES_CONNECTION_STRING", builder.Configuration, "DefaultConnection");
+    var connectionString = EnvironmentHelper.GetValue("POSTGRES_CONNECTION_STRING", builder.Configuration, "ConnectionStrings:DefaultConnection");
     options.UseNpgsql(connectionString);
 });
 
