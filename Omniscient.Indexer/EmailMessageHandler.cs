@@ -26,8 +26,11 @@ public class EmailMessageHandler(IServiceProvider serviceProvider) : IRabbitMqMe
             throw new Exception("Do not process message!");
 
         char firstChar = char.ToUpper(message.Sender[0]);
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        var start = EnvironmentHelper.GetValue("SENDER_START", configuration);
+        var end = EnvironmentHelper.GetValue("SENDER_END", configuration);
         
-        if(firstChar >= 'A' && firstChar <= 'M')
+        if(firstChar >= start[0] && firstChar <= end[0])
             return true;
 
         throw new Exception("Do not process message!");
