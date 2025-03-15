@@ -96,7 +96,9 @@ public static class Extensions
             {
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation();
+                    .AddRuntimeInstrumentation()
+                    .AddPrometheusExporter()
+                    .AddMeter("Omniscient.Indexer");
             })
             .WithTracing(tracing =>
             {

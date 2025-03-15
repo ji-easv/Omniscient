@@ -1,4 +1,6 @@
-﻿using Omniscient.Indexer.Infrastructure;
+﻿using System.Diagnostics;
+using System.Diagnostics.Metrics;
+using Omniscient.Indexer.Infrastructure;
 using Omniscient.ServiceDefaults;
 using Omniscient.Shared;
 using Omniscient.Shared.Dtos;
@@ -11,6 +13,9 @@ namespace Omniscient.Indexer.Domain.Services;
 
 public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndexerService> logger, AppDbContext context) : IIndexerService
 {
+    private static readonly Meter Meter = new Meter("Omniscient.Indexer");
+    private static readonly Histogram<double> IndexingDurationHistogram =
+        Meter.CreateHistogram<double>("indexing_duration", "ms", "Duration of indexing in milliseconds");
    private readonly char[] _splitChars = [' ', '\n', '\r', '\t', '.', ',', '!', '?', ';', ':', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', '`', '~', '@', '#', '$', '%', '^', '&', '*', '-', '_', '+', '=', '"'];
 
     public async Task<EmailDto> GetEmailAsync(Guid emailId)
@@ -36,6 +41,7 @@ public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndex
     public async Task IndexEmails(List<Email> emails)
     {
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
+        var stopwatch = Stopwatch.StartNew();
 
         var uniqueWords = new HashSet<string>();
         var occurrences = new List<Occurence>();
@@ -73,6 +79,9 @@ public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndex
         await indexerRepository.AddEmailsAsync(emailsToSave);
 
         await context.SaveChangesAsync();
+        stopwatch.Stop();
+        IndexingDurationHistogram.Record(stopwatch.Elapsed.TotalMilliseconds);
+        
         GC.Collect();
     }
 

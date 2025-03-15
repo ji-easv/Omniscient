@@ -33,8 +33,6 @@ public class FileSystemRepository : IFileSystemRepository
 
     public async Task ReadAndPublishFiles(string? path)
     {
-        using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
-
         if (string.IsNullOrEmpty(path))
         {
             _logger.LogError("No path provided to search for files.");
