@@ -22,7 +22,6 @@ public class EmailMessageHandler(IServiceProvider serviceProvider) : IRabbitMqMe
     
     private bool ShouldProcessMessage(EmailMessage message)
     {
-        // TODO: let's not throw exceptions, let's log them instead
         if (string.IsNullOrEmpty(message.Sender))
             throw new Exception("Do not process message!");
 
