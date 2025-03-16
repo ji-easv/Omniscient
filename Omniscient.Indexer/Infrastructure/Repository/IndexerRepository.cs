@@ -95,19 +95,31 @@ public class IndexerRepository(AppDbContext context) : IIndexerRepository
     public async Task UpsertWordsAsync(List<string> wordValues)
     {
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
-    
+
         if (!wordValues.Any())
             return;
-    
-        // Build a single SQL statement with multiple values
-        var valuesList = string.Join(", ", wordValues.Distinct().Select((w, i) => $"(@p{i})"));
-        var sql = $"INSERT INTO \"Words\" (\"Value\") VALUES {valuesList} ON CONFLICT (\"Value\") DO NOTHING";
-    
-        var parameters = wordValues.Distinct()
-            .Select((word, index) => new NpgsqlParameter($"@p{index}", word))
-            .ToArray();
-    
-        await context.Database.ExecuteSqlRawAsync(sql, parameters);
+
+        // Get distinct words
+        var distinctWords = wordValues.Distinct().ToList();
+
+        // PostgreSQL has a parameter limit of 65,535 parameters
+        // Let's use a safe batch size - since each word is one parameter
+        const int batchSize = 10000;
+
+        for (int i = 0; i < distinctWords.Count; i += batchSize)
+        {
+            var batch = distinctWords.Skip(i).Take(batchSize).ToList();
+
+            // Build SQL statement for this batch
+            var valuesList = string.Join(", ", batch.Select((w, index) => $"(@p{index})"));
+            var sql = $"INSERT INTO \"Words\" (\"Value\") VALUES {valuesList} ON CONFLICT (\"Value\") DO NOTHING";
+
+            var parameters = batch
+                .Select((word, index) => new NpgsqlParameter($"@p{index}", word))
+                .ToArray();
+
+            await context.Database.ExecuteSqlRawAsync(sql, parameters);
+        }
     }
 
 }

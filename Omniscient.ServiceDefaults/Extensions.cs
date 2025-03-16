@@ -178,7 +178,7 @@ public static class Extensions
             // Override specific categories:
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
-            .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Debug)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
             // Enrich log events with additional context information
             .Enrich.FromLogContext()
             .Enrich.WithThreadId()

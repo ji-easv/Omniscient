@@ -15,7 +15,6 @@ public class FileSystemRepository : IFileSystemRepository
     private readonly IOptions<FileSystemOptions> _options;
     private readonly object _logLock = new();
 
-    private const int BatchSize = 5000;
     private const int MaxConcurrency = 20;
     private readonly SemaphoreSlim _semaphore = new(MaxConcurrency);
 
@@ -39,50 +38,51 @@ public class FileSystemRepository : IFileSystemRepository
             throw new Exception("No path provided to search for files.");
         }
 
-        var allFiles = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
-            .Where(file => !Path.GetFileName(file).Equals(".DS_Store", StringComparison.OrdinalIgnoreCase))
-            .ToArray();
-
-        // To not spend long time waiting for fetching all the files we limit this to download 4000 mails, and if you want to fetch all provide --no-limit
-        if (_options.Value.LimitFiles)
-        {
-            allFiles = allFiles
-                .Take(4000)
-                .ToArray();
-        }
-
-        _allFilesCount = allFiles.Length;
         _path = path;
 
-        _logger.LogInformation($"Found {_allFilesCount} files in {path}.");
-
-        for (int i = 0; i < allFiles.Length; i += BatchSize)
+        // Get all direct folders inside the path
+        var directFolders = Directory.GetDirectories(path);
+        _logger.LogInformation($"Found {directFolders.Length} sender folders in {path}.");
+        var i = 0;
+        // Process each sender folder
+        foreach (var senderFolder in directFolders)
         {
-            var batchFiles = allFiles.Skip(i).Take(BatchSize).ToArray();
-
-            var emailTasks = batchFiles.Select(file => ProcessFileAsync(file));
+            var senderName = Path.GetFileName(senderFolder);
+            _logger.LogDebug($"Processing sender folder: {senderName}");
+            
+            // Get all email files in this sender folder (including subfolders)
+            var senderFiles = Directory.GetFiles(senderFolder, "*.*", SearchOption.AllDirectories)
+                .Where(file => !Path.GetFileName(file).Equals(".DS_Store", StringComparison.OrdinalIgnoreCase))
+                .Take(20)
+                .ToArray();
+            
+            _allFilesCount = senderFiles.Length;
+            _logger.LogDebug($"Found {_allFilesCount} emails for sender {senderName}");
+            _processedFiles = 0;
+            _lastLoggedPercentage = 0;
+            
+            var emailTasks = senderFiles.Select(file => ProcessFileAsync(file));
             var emails = await Task.WhenAll(emailTasks);
 
             var emailMessage = new EmailMessage
             {
-                Emails = emails.ToList()
+                Emails = emails.ToList(),
+                Sender = senderName
             };
             await _publisher.PublishAsync(emailMessage);
+            i++;
 
-            // Update progress.
-            Interlocked.Add(ref _processedFiles, batchFiles.Length);
-            int current = _processedFiles;
-            int percentage = (current * 100) / _allFilesCount;
+            // Update progress for this sender
+            Interlocked.Add(ref _processedFiles, senderFiles.Length);
+            _processedFiles += senderFiles.Length;
 
             lock (_logLock)
             {
-                if (percentage - _lastLoggedPercentage >= 2)
-                {
-                    _lastLoggedPercentage = percentage;
-                    _logger.LogDebug($"{percentage}% complete ({current}/{_allFilesCount}) files read");
-                }
+                _logger.LogDebug($"Sender {senderName}: complete ({_allFilesCount}) files read");
             }
         }
+        _logger.LogInformation($"Processed {_processedFiles} files from {_allFilesCount} total files.");
+        _logger.LogInformation($"Finished processing files. {i}");
     }
 
     private async Task<Email> ProcessFileAsync(string file)
