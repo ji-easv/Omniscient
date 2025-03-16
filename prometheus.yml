@@ -1,5 +1,7 @@
-﻿scrape_configs:
+﻿global: 
+  scrape_interval: 10s
+
+scrape_configs:
   - job_name: "indexer-service"
-    scrape_interval: 1s
     static_configs:
-      - targets: ["indexer-service-shard1:8081"]
+      - targets: ["indexer-service-shard1:8081", "indexer-service-shard2:8082"]

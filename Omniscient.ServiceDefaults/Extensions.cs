@@ -12,7 +12,6 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Events;
-
 namespace Omniscient.ServiceDefaults;
 
 // Adds common .NET Aspire services: service discovery, resilience, health checks, and OpenTelemetry.
@@ -73,7 +72,7 @@ public static class Extensions
     public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
-        var endpoint = EnvironmentHelper.GetValue("OTEL_EXPORTER_OTLP_ENDPOINT", builder.Configuration);
+        var otelEndpoint = EnvironmentHelper.GetValue("OTEL_EXPORTER_OTLP_ENDPOINT", builder.Configuration);
 
         builder.Logging.AddOpenTelemetry(logging =>
         {
@@ -115,9 +114,10 @@ public static class Extensions
             {
                 tracing.AddSource(ActivitySources.OmniscientActivitySource.Name)
                     .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation();
+                    .AddHttpClientInstrumentation()
+                    .AddZipkinExporter(); // configured through OTEL_EXPORTER_ZIPKIN_ENDPOINT
             })
-            .UseOtlpExporter(OtlpExportProtocol.Grpc, new Uri(endpoint));
+            .UseOtlpExporter(OtlpExportProtocol.Grpc, new Uri(otelEndpoint));
 
         return builder;
     }

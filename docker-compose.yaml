@@ -55,6 +55,7 @@
       - RABBITMQ_HOST=rabbitmq
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_RESOURCE_ATTRIBUTES=service.name=Omniscient.Cleaner
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
       - WAIT_HOSTS=rabbitmq:5672
     volumes:
       - ./.enron-files:/app/.enron-files
@@ -82,6 +83,7 @@
       - POSTGRES_CONNECTION_STRING=HOST=postgres_db_shard1;PORT=5432;DB=Omniscient;UID=root;PWD=password;
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Indexer
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
       - SENDER_START=A
       - SENDER_END=M
       - WAIT_HOSTS=rabbitmq:5672,postgres_db_shard1:5432
@@ -108,6 +110,7 @@
       - POSTGRES_CONNECTION_STRING=HOST=postgres_db_shard2;PORT=5432;DB=Omniscient;UID=root;PWD=password;
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Indexer
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
       - SENDER_START=N
       - SENDER_END=Z
       - WAIT_HOSTS=rabbitmq:5672,postgres_db_shard2:5432
@@ -138,6 +141,13 @@
      - "18889:18889"
    networks:
      - omniscient
+  
+  zipkin:
+    image: openzipkin/zipkin:latest
+    ports:
+      - "9411:9411"
+    networks:
+      - omniscient
 
   prometheus:
     image: prom/prometheus:latest
@@ -145,6 +155,7 @@
       - "9090:9090" 
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus-data:/prometheus
     networks:
       - omniscient
       
@@ -158,6 +169,12 @@
       - prometheus
     networks:
       - omniscient
+    volumes:
+      - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana-provisioning/dashboard.yaml:/etc/grafana/provisioning/dashboards/main.yaml
+      - ./grafana-provisioning/dashboards:/var/lib/grafana/dashboards
+      - ./grafana-data:/var/lib/grafana
+    restart: unless-stopped
     
 networks:
   omniscient:
