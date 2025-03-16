@@ -28,20 +28,20 @@ public static class Extensions
         {
             return serviceInstance;
         }
-    
+
         // Otherwise use container ID (hostname)
         var containerId = Environment.GetEnvironmentVariable("HOSTNAME") ?? Environment.MachineName;
-    
+
         // Try to get service name from environment
         var serviceName = Environment.GetEnvironmentVariable("SERVICE_NAME");
         if (!string.IsNullOrEmpty(serviceName))
         {
             return $"{serviceName}.{containerId[..8]}";
         }
-    
+
         return containerId;
     }
-    
+
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.ConfigureSerilog();
@@ -73,14 +73,16 @@ public static class Extensions
     public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
+        var endpoint = EnvironmentHelper.GetValue("OTEL_EXPORTER_OTLP_ENDPOINT", builder.Configuration);
+
         builder.Logging.AddOpenTelemetry(logging =>
         {
             logging.IncludeFormattedMessage = true;
             logging.IncludeScopes = true;
         });
-        
+
         var instanceId = builder.Properties.TryGetValue("InstanceId", out var id)
-            ? id.ToString() 
+            ? id.ToString()
             : GetInstanceIdentifier();
 
         builder.Services.AddOpenTelemetry()
@@ -91,6 +93,8 @@ public static class Extensions
                 {
                     new KeyValuePair<string, object>("service.replica.id", instanceId)
                 });
+
+                resource.AddService(serviceName: builder.Environment.ApplicationName);
             })
             .WithMetrics(metrics =>
             {
@@ -98,41 +102,22 @@ public static class Extensions
                     .AddHttpClientInstrumentation()
                     .AddRuntimeInstrumentation()
                     .AddPrometheusExporter()
-                    .AddMeter("Omniscient.Indexer");
+                    .AddMeter("Omniscient.Indexer")
+                    // Metrics provides by ASP.NET Core in .NET 8
+                    .AddMeter("Microsoft.AspNetCore.Hosting")
+                    .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
+                    // Metrics provided by System.Net libraries
+                    .AddMeter("System.Net.Http")
+                    .AddMeter("System.Net.NameResolution")
+                    .AddPrometheusExporter();
             })
             .WithTracing(tracing =>
             {
                 tracing.AddSource(ActivitySources.OmniscientActivitySource.Name)
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation();
-            });
-
-        builder.AddOpenTelemetryExporters();
-
-        return builder;
-    }
-
-    private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder)
-        where TBuilder : IHostApplicationBuilder
-    {
-        var endpoint = EnvironmentHelper.GetValue("OTEL_EXPORTER_OTLP_ENDPOINT", builder.Configuration);
-        
-        builder.Services.AddOpenTelemetry()
-            .WithTracing(tracing =>
-            {
-                tracing.AddAspNetCoreInstrumentation();
-                tracing.AddHttpClientInstrumentation();
-                tracing.SetSampler(new AlwaysOnSampler());
             })
             .UseOtlpExporter(OtlpExportProtocol.Grpc, new Uri(endpoint));
-        
-
-        // Uncomment the following lines to enable the Azure Monitor exporter (requires the Azure.Monitor.OpenTelemetry.AspNetCore package)
-        //if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
-        //{
-        //    builder.Services.AddOpenTelemetry()
-        //       .UseAzureMonitor();
-        //}
 
         return builder;
     }
@@ -149,7 +134,6 @@ public static class Extensions
 
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
-        
         // Adding health checks endpoints to applications in non-development environments has security implications.
         // See https://aka.ms/dotnet/aspire/healthchecks for details before enabling these endpoints in non-development environments.
         if (app.Environment.IsDevelopment())
@@ -163,7 +147,7 @@ public static class Extensions
                 Predicate = r => r.Tags.Contains("live")
             });
         }
-        
+
 
         return app;
     }
@@ -184,7 +168,9 @@ public static class Extensions
             .Enrich.WithThreadId()
             .Enrich.WithMachineName()
             // Write logs to console with a custom output template
-            .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss}|{MachineName}|{ThreadId}|{RequestId}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
+            .WriteTo.Console(
+                outputTemplate:
+                "{Timestamp:yyyy-MM-dd HH:mm:ss}|{MachineName}|{ThreadId}|{RequestId}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
             .CreateLogger();
 
         builder.Logging.AddSerilog();

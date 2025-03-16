@@ -55,6 +55,7 @@
       - RABBITMQ_HOST=rabbitmq
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_RESOURCE_ATTRIBUTES=service.name=Omniscient.Cleaner
+      - WAIT_HOSTS=rabbitmq:5672
     volumes:
       - ./.enron-files:/app/.enron-files
     command: ["dotnet", "Omniscient.Cleaner.dll", "--init", "--path=/app/.enron-files/maildir" ]    
@@ -83,6 +84,7 @@
       - OTEL_SERVICE_NAME=Omniscient.Indexer
       - SENDER_START=A
       - SENDER_END=M
+      - WAIT_HOSTS=rabbitmq:5672,postgres_db_shard1:5432
     networks:
       - omniscient
 
@@ -103,11 +105,12 @@
     environment:
       - ASPNETCORE_HTTP_PORTS=8081
       - RABBITMQ_HOST=rabbitmq
-      - POSTGRES_CONNECTION_STRING=HOST=postgres_db_shard2;PORT=5433;DB=Omniscient;UID=root;PWD=password;
+      - POSTGRES_CONNECTION_STRING=HOST=postgres_db_shard2;PORT=5432;DB=Omniscient;UID=root;PWD=password;
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Indexer
       - SENDER_START=N
       - SENDER_END=Z
+      - WAIT_HOSTS=rabbitmq:5672,postgres_db_shard2:5432
     networks:
       - omniscient
   
@@ -124,7 +127,7 @@
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Web
       - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
-      - INDEXER_BASE_ADDRESS=http://indexer-service:8081/
+      - INDEXER_BASE_ADDRESS=http://indexer-service-shard1:8081/
     networks:
       - omniscient
         
@@ -138,7 +141,6 @@
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
     ports:
       - "9090:9090" 
     volumes:
