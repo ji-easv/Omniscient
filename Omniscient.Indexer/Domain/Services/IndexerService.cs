@@ -15,6 +15,7 @@ public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndex
 
     public async Task<EmailDto> GetEmailAsync(Guid emailId)
     {
+        using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
         var email = await indexerRepository.GetEmailByIdAsync(emailId);
 
         if (email == null)
@@ -27,6 +28,7 @@ public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndex
 
     public async Task<PaginatedList<EmailDto>> SearchEmailsAsync(string query, int pageIndex, int pageSize)
     {
+        using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
         query = query.ToLower();
         var queryTerms = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var emails = await indexerRepository.SearchEmailsAsync(queryTerms, pageIndex, pageSize);
@@ -43,6 +45,7 @@ public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndex
 
         foreach (var email in emails)
         {
+            using var activity2 = ActivitySources.OmniscientActivitySource.StartActivity(name:$"Processing email {email}");
             emailsToSave.Add(email);
 
             // Split the email content into words
@@ -78,6 +81,8 @@ public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndex
 
     public async Task<string> GetFullEmailContent(Guid emailId)
     {
+        using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
+
         var email = await indexerRepository.GetEmailByIdAsync(emailId);
         if (email == null)
         {

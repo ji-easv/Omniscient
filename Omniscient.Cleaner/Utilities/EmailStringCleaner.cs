@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Omniscient.ServiceDefaults;
 
 namespace Omniscient.Cleaner.Utilities;
 
@@ -11,6 +12,8 @@ public static class EmailStringCleaner
     /// <returns>The content without the headers.</returns>
     public static string RemoveHeaders(string content)
     {
+        using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
+
         var pattern = @"^(?:(?!\r?\n\r?\n).)*\r?\n\r?\n";
         var regex = new Regex(pattern, RegexOptions.Singleline);
 
