@@ -8,11 +8,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddHttpClient<IndexerClient>(client =>
+builder.Services.AddHttpClient("Shard1IndexerClient", client =>
 {
-    var baseAddress = EnvironmentHelper.GetValue("INDEXER_BASE_ADDRESS", builder.Configuration);
+    var baseAddresses = EnvironmentHelper.GetValue("INDEXER_BASE_ADDRESSES", builder.Configuration);
+    var baseAddress = baseAddresses.Split(',', StringSplitOptions.RemoveEmptyEntries).First();
     client.BaseAddress = new Uri(baseAddress);
 });
+
+builder.Services.AddHttpClient("Shard2IndexerClient", client =>
+{
+    var baseAddresses = EnvironmentHelper.GetValue("INDEXER_BASE_ADDRESSES", builder.Configuration);
+    var baseAddress = baseAddresses.Split(',', StringSplitOptions.RemoveEmptyEntries).Last();
+    client.BaseAddress = new Uri(baseAddress);
+});
+
+builder.Services.AddTransient<IndexerClient>();
 
 builder.AddServiceDefaults();
 

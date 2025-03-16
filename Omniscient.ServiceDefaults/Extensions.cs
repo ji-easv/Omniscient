@@ -12,7 +12,6 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Events;
-
 namespace Omniscient.ServiceDefaults;
 
 // Adds common .NET Aspire services: service discovery, resilience, health checks, and OpenTelemetry.
@@ -28,20 +27,20 @@ public static class Extensions
         {
             return serviceInstance;
         }
-    
+
         // Otherwise use container ID (hostname)
         var containerId = Environment.GetEnvironmentVariable("HOSTNAME") ?? Environment.MachineName;
-    
+
         // Try to get service name from environment
         var serviceName = Environment.GetEnvironmentVariable("SERVICE_NAME");
         if (!string.IsNullOrEmpty(serviceName))
         {
             return $"{serviceName}.{containerId[..8]}";
         }
-    
+
         return containerId;
     }
-    
+
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.ConfigureSerilog();
@@ -73,14 +72,16 @@ public static class Extensions
     public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
+        var otelEndpoint = EnvironmentHelper.GetValue("OTEL_EXPORTER_OTLP_ENDPOINT", builder.Configuration);
+
         builder.Logging.AddOpenTelemetry(logging =>
         {
             logging.IncludeFormattedMessage = true;
             logging.IncludeScopes = true;
         });
-        
+
         var instanceId = builder.Properties.TryGetValue("InstanceId", out var id)
-            ? id.ToString() 
+            ? id.ToString()
             : GetInstanceIdentifier();
 
         builder.Services.AddOpenTelemetry()
@@ -91,39 +92,31 @@ public static class Extensions
                 {
                     new KeyValuePair<string, object>("service.replica.id", instanceId)
                 });
+
+                resource.AddService(serviceName: builder.Environment.ApplicationName);
             })
             .WithMetrics(metrics =>
             {
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation();
+                    .AddRuntimeInstrumentation()
+                    .AddPrometheusExporter()
+                    .AddMeter("Omniscient.Indexer")
+                    // Metrics provides by ASP.NET Core in .NET 8
+                    .AddMeter("Microsoft.AspNetCore.Hosting")
+                    .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
+                    // Metrics provided by System.Net libraries
+                    .AddMeter("System.Net.Http")
+                    .AddMeter("System.Net.NameResolution")
+                    .AddPrometheusExporter();
             })
             .WithTracing(tracing =>
             {
                 tracing.AddSource(ActivitySources.OmniscientActivitySource.Name)
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation();
-            });
-
-        builder.AddOpenTelemetryExporters();
-
-        return builder;
-    }
-
-    private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder)
-        where TBuilder : IHostApplicationBuilder
-    {
-        var endpoint = EnvironmentHelper.GetValue("OTEL_EXPORTER_OTLP_ENDPOINT", builder.Configuration);
-        
-        builder.Services.AddOpenTelemetry()
-            .UseOtlpExporter(OtlpExportProtocol.Grpc, new Uri(endpoint));
-
-        // Uncomment the following lines to enable the Azure Monitor exporter (requires the Azure.Monitor.OpenTelemetry.AspNetCore package)
-        //if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
-        //{
-        //    builder.Services.AddOpenTelemetry()
-        //       .UseAzureMonitor();
-        //}
+            })
+            .UseOtlpExporter(OtlpExportProtocol.Grpc, new Uri(otelEndpoint));
 
         return builder;
     }
@@ -154,6 +147,7 @@ public static class Extensions
             });
         }
 
+
         return app;
     }
 
@@ -171,8 +165,11 @@ public static class Extensions
             // Enrich log events with additional context information
             .Enrich.FromLogContext()
             .Enrich.WithThreadId()
+            .Enrich.WithMachineName()
             // Write logs to console with a custom output template
-            .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss}|{MachineName}|{ThreadId}|{RequestId}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
+            .WriteTo.Console(
+                outputTemplate:
+                "{Timestamp:yyyy-MM-dd HH:mm:ss}|{MachineName}|{ThreadId}|{RequestId}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
             .CreateLogger();
 
         builder.Logging.AddSerilog();

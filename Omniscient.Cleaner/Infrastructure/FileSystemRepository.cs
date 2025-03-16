@@ -32,8 +32,6 @@ public class FileSystemRepository : IFileSystemRepository
 
     public async Task ReadAndPublishFiles(string? path)
     {
-        using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
-
         if (string.IsNullOrEmpty(path))
         {
             _logger.LogError("No path provided to search for files.");
@@ -55,7 +53,7 @@ public class FileSystemRepository : IFileSystemRepository
             // Get all email files in this sender folder (including subfolders)
             var senderFiles = Directory.GetFiles(senderFolder, "*.*", SearchOption.AllDirectories)
                 .Where(file => !Path.GetFileName(file).Equals(".DS_Store", StringComparison.OrdinalIgnoreCase))
-                .Take(20)
+                .Take(20) // TODO: Remove this line to process all files
                 .ToArray();
             
             _allFilesCount = senderFiles.Length;

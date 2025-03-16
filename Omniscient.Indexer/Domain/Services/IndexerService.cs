@@ -1,4 +1,6 @@
-﻿using Omniscient.Indexer.Infrastructure;
+﻿using System.Diagnostics;
+using System.Diagnostics.Metrics;
+using Omniscient.Indexer.Infrastructure;
 using Omniscient.ServiceDefaults;
 using Omniscient.Shared;
 using Omniscient.Shared.Dtos;
@@ -36,13 +38,21 @@ public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndex
     public async Task IndexEmails(List<Email> emails)
     {
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
+        var stopwatch = Stopwatch.StartNew();
 
+        var existingEmailIds = new HashSet<Guid>(await indexerRepository.GetAllEmailIdsAsync());
+        
         var uniqueWords = new HashSet<string>();
         var occurrences = new List<Occurence>();
         var emailsToSave = new List<Email>();
 
         foreach (var email in emails)
         {
+            if (existingEmailIds.Contains(email.Id))
+            {
+                continue;
+            }
+            
             emailsToSave.Add(email);
 
             // Split the email content into words
@@ -73,6 +83,9 @@ public class IndexerService(IIndexerRepository indexerRepository, ILogger<IIndex
         await indexerRepository.AddEmailsAsync(emailsToSave);
 
         await context.SaveChangesAsync();
+        stopwatch.Stop();
+        CustomMetrics.IndexingDurationHistogram.Record(stopwatch.Elapsed.TotalMilliseconds);
+        
         GC.Collect();
     }
 

@@ -91,6 +91,12 @@ public class IndexerRepository(AppDbContext context) : IIndexerRepository
         using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
         return await context.Emails.ToListAsync();
     }
+    
+    public async Task<List<Guid>> GetAllEmailIdsAsync()
+    {
+        using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
+        return await context.Emails.Select(e => e.Id).ToListAsync();
+    }
 
     public async Task UpsertWordsAsync(List<string> wordValues)
     {

@@ -12,7 +12,7 @@
     networks:
       - omniscient
   
-  postgres_db_shard1:
+  postgres_db_shard1: &postgres_db
     image: postgres:latest
     ports:
       - "5432:5432"
@@ -28,21 +28,10 @@
     networks:
       - omniscient
 
-  postgres_db_shard2:
-    image: postgres:latest
+  postgres_db_shard2: 
+    <<: *postgres_db
     ports:
       - "5433:5432"
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready", "-d", "db_prod" ]
-      interval: 30s
-      timeout: 60s
-      retries: 5
-      start_period: 60s
-    environment:
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_USER=root
-    networks:
-      - omniscient
   
   cleaner-service:
     build:
@@ -55,13 +44,15 @@
       - RABBITMQ_HOST=rabbitmq
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_RESOURCE_ATTRIBUTES=service.name=Omniscient.Cleaner
+      - WAIT_HOSTS=rabbitmq:5672
     volumes:
       - ./.enron-files:/app/.enron-files
     command: ["dotnet", "Omniscient.Cleaner.dll", "--init", "--path=/app/.enron-files/maildir" ]    
     networks:
       - omniscient
-  
-  indexer-service-shard1:
+
+  indexer-service-shard1: &indexer-service
+    image: omniscient-indexer-service
     build:
       context: .
       dockerfile: Omniscient.Indexer/Dockerfile
@@ -83,29 +74,21 @@
       - OTEL_SERVICE_NAME=Omniscient.Indexer
       - SENDER_START=A
       - SENDER_END=M
+      - WAIT_HOSTS=rabbitmq:5672,postgres_db_shard1:5432
     networks:
       - omniscient
 
   indexer-service-shard2:
-    build:
-      context: .
-      dockerfile: Omniscient.Indexer/Dockerfile
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      postgres_db_shard2:
-        condition: service_healthy
-    deploy:
-      restart_policy:
-        condition: on-failure
+    <<: *indexer-service
     ports:
       - "8082:8081"
     environment:
       - ASPNETCORE_HTTP_PORTS=8081
       - RABBITMQ_HOST=rabbitmq
-      - POSTGRES_CONNECTION_STRING=HOST=postgres_db_shard2;PORT=5433;DB=Omniscient;UID=root;PWD=password;
+      - POSTGRES_CONNECTION_STRING=HOST=postgres_db_shard2;PORT=5432;DB=Omniscient;UID=root;PWD=password;
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Indexer
+      - WAIT_HOSTS=rabbitmq:5672,postgres_db_shard2:5432
       - SENDER_START=N
       - SENDER_END=Z
     networks:
@@ -123,8 +106,7 @@
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Web
-      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
-      - INDEXER_BASE_ADDRESS=http://indexer-service:8081/
+      - INDEXER_BASE_ADDRESSES=http://indexer-service-shard1:8081/,http://indexer-service-shard2:8081/
     networks:
       - omniscient
         
@@ -132,10 +114,36 @@
    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
    ports:
      - "18888:18888"
-   expose:
-     - "18889"
+     - "18889:18889"
    networks:
      - omniscient
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090" 
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus-data:/prometheus
+    networks:
+      - omniscient
+      
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - omniscient
+    volumes:
+      - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana-provisioning/dashboard.yaml:/etc/grafana/provisioning/dashboards/main.yaml
+      - ./grafana-provisioning/dashboards:/var/lib/grafana/dashboards
+      - ./grafana-data:/var/lib/grafana
+    restart: unless-stopped
     
 networks:
   omniscient:

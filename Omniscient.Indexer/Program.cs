@@ -50,4 +50,6 @@ app.MapControllers();
 
 app.UseHttpsRedirection();
 
+app.MapPrometheusScrapingEndpoint();
+
 app.Run();
