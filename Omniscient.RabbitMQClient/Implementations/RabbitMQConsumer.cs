@@ -1,4 +1,5 @@
 ﻿using EasyNetQ;
+using EasyNetQ.Consumer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Omniscient.RabbitMQClient.Interfaces;
@@ -112,11 +113,13 @@ public class RabbitMqConsumer : BackgroundService, IAsyncConsumer
                 try
                 {
                     handler(msg);
+                    return Task.FromResult(AckStrategies.Ack);
                 }
                 catch (Exception ex)
                 {
                     Log.Error(ex, "Error processing message: {MessageType}", typeof(T).Name);
                 }
+                return Task.FromResult(AckStrategies.NackWithRequeue);
             },
             cancellationToken
         );
