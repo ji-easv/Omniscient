@@ -114,8 +114,7 @@ public static class Extensions
             {
                 tracing.AddSource(ActivitySources.OmniscientActivitySource.Name)
                     .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
-                    .AddZipkinExporter(); // configured through OTEL_EXPORTER_ZIPKIN_ENDPOINT
+                    .AddHttpClientInstrumentation();
             })
             .UseOtlpExporter(OtlpExportProtocol.Grpc, new Uri(otelEndpoint));
 
