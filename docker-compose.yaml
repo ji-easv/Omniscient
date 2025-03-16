@@ -83,10 +83,14 @@
     ports:
       - "8082:8081"
     environment:
+      - ASPNETCORE_HTTP_PORTS=8081
+      - RABBITMQ_HOST=rabbitmq
       - POSTGRES_CONNECTION_STRING=HOST=postgres_db_shard2;PORT=5432;DB=Omniscient;UID=root;PWD=password;
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
+      - OTEL_SERVICE_NAME=Omniscient.Indexer
+      - WAIT_HOSTS=rabbitmq:5672,postgres_db_shard2:5432
       - SENDER_START=N
       - SENDER_END=Z
-      - WAIT_HOSTS=rabbitmq:5672,postgres_db_shard2:5432
     networks:
       - omniscient
   
@@ -102,7 +106,7 @@
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Web
-      - INDEXER_BASE_ADDRESS=http://indexer-service-shard1:8081/
+      - INDEXER_BASE_ADDRESSES=http://indexer-service-shard1:8081/,http://indexer-service-shard2:8081/
     networks:
       - omniscient
         

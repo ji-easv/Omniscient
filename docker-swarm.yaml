@@ -99,7 +99,7 @@
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://dotnet-aspire:18889
       - OTEL_SERVICE_NAME=Omniscient.Web
-      - INDEXER_BASE_ADDRESS=http://indexer-service:8081/
+      - INDEXER_BASE_ADDRESSES=http://indexer-service-shard1:8081/,http://indexer-service-shard2:8081/
       - SERVICE_INSTANCE_ID={{.Service.Name}}.{{.Task.Slot}}.{{.Task.ID}}
   
   dotnet-aspire:
