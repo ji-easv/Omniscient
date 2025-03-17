@@ -10,6 +10,7 @@ public class IndexerRepository(AppDbContext context) : IIndexerRepository
 {
     public Task<Email?> GetEmailByIdAsync(Guid emailId)
     {
+        using var activity = ActivitySources.OmniscientActivitySource.StartActivity();
         return context.Emails.FirstOrDefaultAsync(e => e.Id == emailId);
     }
 
