@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 using Omniscient.Indexer.Domain.Services;
+using Omniscient.ServiceDefaults;
 using Omniscient.Shared.Exceptions;
 
 namespace Omniscient.Indexer.Controllers;
@@ -39,6 +41,8 @@ public class IndexerController(IIndexerService indexerService) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetEmailsPaginated([FromQuery] string query = "", [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
     { 
+        var stopwatch = Stopwatch.StartNew();
+
         if (pageIndex < 1)
         {
             return BadRequest("Page index must be greater than 0.");
@@ -50,6 +54,8 @@ public class IndexerController(IIndexerService indexerService) : ControllerBase
         }
         
         var emails = await indexerService.SearchEmailsAsync(query, pageIndex, pageSize);
+        
+        CustomMetrics.SearchPerformanceHistogram.Record(stopwatch.ElapsedMilliseconds);
         return Ok(emails);
     }
 }

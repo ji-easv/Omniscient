@@ -10,6 +10,7 @@ public interface IIndexerRepository
     Task AddEmailsAsync(List<Email> email);
     Task<List<Email>> GetAllEmails();
     Task DeleteEmailAsync(Email email);
+    Task<List<Guid>> GetAllEmailIdsAsync();
     
     Task<PaginatedList<Email>> SearchEmailsAsync(string[] queryTerms, int pageIndex, int pageSize);
     Task AddOccurrencesAsync(IEnumerable<Occurence> occurrences);
